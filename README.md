@@ -29,5 +29,5 @@ make createdb
 - run server
 
 ```bash
-go run ./cmd/\*.go
+go run ./cmd/*.go
 ```
