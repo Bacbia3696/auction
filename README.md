@@ -19,3 +19,15 @@ make postgres
 ```bash
 make migrateup
 ```
+
+- create DB
+
+```bash
+make createdb
+```
+
+- run server
+
+```bash
+go run ./cmd/\*.go
+```
