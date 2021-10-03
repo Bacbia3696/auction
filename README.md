@@ -14,16 +14,16 @@ make install
 make postgres
 ```
 
-- run migration
-
-```bash
-make migrateup
-```
-
 - create DB
 
 ```bash
 make createdb
+```
+
+- run migration
+
+```bash
+make migrateup
 ```
 
 - run server
