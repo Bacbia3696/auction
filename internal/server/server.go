@@ -32,6 +32,10 @@ func (s *Server) Serve() error {
 
 func (server *Server) setupRouter() {
 	router := gin.Default()
-	router.POST("/users", server.createUser)
+	v1 := router.Group("/user")
+	{
+		v1.POST("/register", server.RegisterUser)
+		v1.POST("/login", server.LoginUser)
+	}
 	server.router = router
 }

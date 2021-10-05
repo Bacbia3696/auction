@@ -58,3 +58,11 @@ func responeErr(ctx *gin.Context, err error, code int) {
 	}
 	ctx.JSON(http.StatusOK, req)
 }
+
+func responeErrMsg(ctx *gin.Context, data interface{}, msg string , code int) {
+	ctx.JSON(http.StatusOK, gin.H{
+		"data": data,
+		"code": code,
+		"msg":  msg,
+	})
+}

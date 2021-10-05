@@ -8,6 +8,15 @@ import (
 
 type Querier interface {
 	CreateUser(ctx context.Context, arg CreateUserParams) (User, error)
+	CreateUserImage(ctx context.Context, arg CreateUserImageParams) (UserImage, error)
+	CreateUserRole(ctx context.Context, arg CreateUserRoleParams) (UserRole, error)
+	GetByEmail(ctx context.Context, email string) (User, error)
+	GetByIdCard(ctx context.Context, idcard string) (User, error)
+	GetByUserName(ctx context.Context, username string) (User, error)
+	GetByUserNameActive(ctx context.Context, username string) (User, error)
+	GetRoleByUserId(ctx context.Context, userid int32) (int32, error)
+	ListImage(ctx context.Context, userid int32) ([]UserImage, error)
+	ListRole(ctx context.Context) ([]Role, error)
 }
 
 var _ Querier = (*Queries)(nil)

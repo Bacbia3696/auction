@@ -7,7 +7,8 @@ import (
 
 func TestBasic(t *testing.T) {
 	username := "user1"
-	tokenString, err := Create(username, 5*time.Second)
+	userId :=1
+	tokenString, err := GenToken(username, int32(userId), 5*time.Second)
 	if err != nil {
 		t.Fatal(err)
 	}

@@ -1,31 +1,38 @@
 package token
 
 import (
+	db "github.com/bacbia3696/auction/db/sqlc"
 	"time"
 
-	"github.com/bacbia3696/auction/internal/config"
 	"github.com/golang-jwt/jwt"
 )
 
 type Claims struct {
+	Name string `json:"Name"`
+	Id   int32    `json:"Id"`
 	jwt.StandardClaims
 }
+var jwtKey = []byte("abcdefghijklmnopq") //config.Get().TokenSignKey
 
-func Create(username string, duration time.Duration) (string, error) {
-	claims := Claims{
+func GenToken(user db.User) (string, error) {
+	expirationTime := time.Now().Add(120 * time.Second)
+	claims := &Claims{
+		Name: user.Username,
+		Id:   user.ID,
 		StandardClaims: jwt.StandardClaims{
-			Subject:   username,
-			IssuedAt:  time.Now().Unix(),
-			ExpiresAt: time.Now().Add(duration).Unix(),
+			ExpiresAt: expirationTime.Unix(),
 		},
 	}
-	jwtToken := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
-	return jwtToken.SignedString(config.Get().TokenSignKey)
+
+	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
+	return token.SignedString(jwtKey)
 }
+
+
 
 func Verify(tokenString string) (*Claims, error) {
 	token, err := jwt.Parse(tokenString, func(*jwt.Token) (interface{}, error) {
-		return []byte(config.Get().TokenSignKey), nil
+		return jwtKey, nil
 	})
 	if token.Valid {
 		return token.Claims.(*Claims), nil

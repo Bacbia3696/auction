@@ -5,36 +5,229 @@ package db
 
 import (
 	"context"
+	"database/sql"
+	"time"
 )
 
 const createUser = `-- name: CreateUser :one
+
 INSERT INTO users (
-    user_name,
-    PASSWORD,
-    full_name)
+    UserName,
+    Password,
+    FullName,
+    Email,
+    Address,
+    Phone,
+    BirthDate,
+    IdCard,
+    IdCardAddress,
+    IdCardDate,
+    BankId,
+    BankOwner,
+    BankName,
+    Status,
+    CreatedAt,
+    UpdatedAt
+    )
 VALUES (
     $1,
     $2,
-    $3)
+    $3,
+    $4,
+    $5,
+    $6,
+    $7,
+    $8,
+    $9,
+    $10,
+    $11,
+    $12,
+    $13,
+    $14,
+    $15,
+    $16)
 RETURNING
-    id, user_name, password, full_name, created_at
+    id, username, password, fullname, email, address, phone, birthdate, idcard, idcardaddress, idcarddate, bankid, bankowner, bankname, status, createdat, updatedat
 `
 
 type CreateUserParams struct {
-	UserName string `json:"user_name"`
-	Password string `json:"password"`
-	FullName string `json:"full_name"`
+	Username      string       `json:"username"`
+	Password      string       `json:"password"`
+	Fullname      string       `json:"fullname"`
+	Email         string       `json:"email"`
+	Address       string       `json:"address"`
+	Phone         string       `json:"phone"`
+	Birthdate     sql.NullTime `json:"birthdate"`
+	Idcard        string       `json:"idcard"`
+	Idcardaddress string       `json:"idcardaddress"`
+	Idcarddate    time.Time    `json:"idcarddate"`
+	Bankid        string       `json:"bankid"`
+	Bankowner     string       `json:"bankowner"`
+	Bankname      string       `json:"bankname"`
+	Status        int32        `json:"status"`
+	Createdat     time.Time    `json:"createdat"`
+	Updatedat     sql.NullTime `json:"updatedat"`
 }
 
+// query.sql
 func (q *Queries) CreateUser(ctx context.Context, arg CreateUserParams) (User, error) {
-	row := q.db.QueryRowContext(ctx, createUser, arg.UserName, arg.Password, arg.FullName)
+	row := q.db.QueryRowContext(ctx, createUser,
+		arg.Username,
+		arg.Password,
+		arg.Fullname,
+		arg.Email,
+		arg.Address,
+		arg.Phone,
+		arg.Birthdate,
+		arg.Idcard,
+		arg.Idcardaddress,
+		arg.Idcarddate,
+		arg.Bankid,
+		arg.Bankowner,
+		arg.Bankname,
+		arg.Status,
+		arg.Createdat,
+		arg.Updatedat,
+	)
 	var i User
 	err := row.Scan(
 		&i.ID,
-		&i.UserName,
+		&i.Username,
 		&i.Password,
-		&i.FullName,
-		&i.CreatedAt,
+		&i.Fullname,
+		&i.Email,
+		&i.Address,
+		&i.Phone,
+		&i.Birthdate,
+		&i.Idcard,
+		&i.Idcardaddress,
+		&i.Idcarddate,
+		&i.Bankid,
+		&i.Bankowner,
+		&i.Bankname,
+		&i.Status,
+		&i.Createdat,
+		&i.Updatedat,
+	)
+	return i, err
+}
+
+const getByEmail = `-- name: GetByEmail :one
+SELECT id, username, password, fullname, email, address, phone, birthdate, idcard, idcardaddress, idcarddate, bankid, bankowner, bankname, status, createdat, updatedat FROM users
+WHERE Email = $1 LIMIT 1
+`
+
+func (q *Queries) GetByEmail(ctx context.Context, email string) (User, error) {
+	row := q.db.QueryRowContext(ctx, getByEmail, email)
+	var i User
+	err := row.Scan(
+		&i.ID,
+		&i.Username,
+		&i.Password,
+		&i.Fullname,
+		&i.Email,
+		&i.Address,
+		&i.Phone,
+		&i.Birthdate,
+		&i.Idcard,
+		&i.Idcardaddress,
+		&i.Idcarddate,
+		&i.Bankid,
+		&i.Bankowner,
+		&i.Bankname,
+		&i.Status,
+		&i.Createdat,
+		&i.Updatedat,
+	)
+	return i, err
+}
+
+const getByIdCard = `-- name: GetByIdCard :one
+SELECT id, username, password, fullname, email, address, phone, birthdate, idcard, idcardaddress, idcarddate, bankid, bankowner, bankname, status, createdat, updatedat FROM users
+WHERE IdCard = $1 LIMIT 1
+`
+
+func (q *Queries) GetByIdCard(ctx context.Context, idcard string) (User, error) {
+	row := q.db.QueryRowContext(ctx, getByIdCard, idcard)
+	var i User
+	err := row.Scan(
+		&i.ID,
+		&i.Username,
+		&i.Password,
+		&i.Fullname,
+		&i.Email,
+		&i.Address,
+		&i.Phone,
+		&i.Birthdate,
+		&i.Idcard,
+		&i.Idcardaddress,
+		&i.Idcarddate,
+		&i.Bankid,
+		&i.Bankowner,
+		&i.Bankname,
+		&i.Status,
+		&i.Createdat,
+		&i.Updatedat,
+	)
+	return i, err
+}
+
+const getByUserName = `-- name: GetByUserName :one
+SELECT id, username, password, fullname, email, address, phone, birthdate, idcard, idcardaddress, idcarddate, bankid, bankowner, bankname, status, createdat, updatedat FROM users
+WHERE UserName = $1 LIMIT 1
+`
+
+func (q *Queries) GetByUserName(ctx context.Context, username string) (User, error) {
+	row := q.db.QueryRowContext(ctx, getByUserName, username)
+	var i User
+	err := row.Scan(
+		&i.ID,
+		&i.Username,
+		&i.Password,
+		&i.Fullname,
+		&i.Email,
+		&i.Address,
+		&i.Phone,
+		&i.Birthdate,
+		&i.Idcard,
+		&i.Idcardaddress,
+		&i.Idcarddate,
+		&i.Bankid,
+		&i.Bankowner,
+		&i.Bankname,
+		&i.Status,
+		&i.Createdat,
+		&i.Updatedat,
+	)
+	return i, err
+}
+
+const getByUserNameActive = `-- name: GetByUserNameActive :one
+SELECT id, username, password, fullname, email, address, phone, birthdate, idcard, idcardaddress, idcarddate, bankid, bankowner, bankname, status, createdat, updatedat FROM users
+WHERE UserName = $1 AND Status = 1 LIMIT 1
+`
+
+func (q *Queries) GetByUserNameActive(ctx context.Context, username string) (User, error) {
+	row := q.db.QueryRowContext(ctx, getByUserNameActive, username)
+	var i User
+	err := row.Scan(
+		&i.ID,
+		&i.Username,
+		&i.Password,
+		&i.Fullname,
+		&i.Email,
+		&i.Address,
+		&i.Phone,
+		&i.Birthdate,
+		&i.Idcard,
+		&i.Idcardaddress,
+		&i.Idcarddate,
+		&i.Bankid,
+		&i.Bankowner,
+		&i.Bankname,
+		&i.Status,
+		&i.Createdat,
+		&i.Updatedat,
 	)
 	return i, err
 }
