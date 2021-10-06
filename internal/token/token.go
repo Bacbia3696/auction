@@ -15,7 +15,7 @@ type Claims struct {
 var jwtKey = []byte("abcdefghijklmnopq") //config.Get().TokenSignKey
 
 func GenToken(user db.User) (string, error) {
-	expirationTime := time.Now().Add(120 * time.Second)
+	expirationTime := time.Now().Add(120000 * time.Second)
 	claims := &Claims{
 		Name: user.UserName,
 		Id:   user.ID,

@@ -2,11 +2,10 @@ package server
 
 import (
 	"github.com/asaskevich/govalidator"
+	"github.com/sirupsen/logrus"
 	"golang.org/x/crypto/bcrypt"
 	"html"
-	"net"
 	"net/http"
-	"regexp"
 	"strings"
 	"time"
 
@@ -36,23 +35,6 @@ type createUserRequest struct {
 	OrganizationDate     string    `json:"organizationDate"`
 	OrganizationAddress      string    `json:"organizationAddress"`
 }
-type createUserOrganizationRequest struct {
-	RoleId        int32      `json:"roleId" binding:"required"`
-	UserName      string    `json:"userName" binding:"required"`
-	Password      string    `json:"password" binding:"required,min=6"`
-	FullName      string    `json:"fullName" binding:"required"`
-	Email         string    `json:"email" binding:"required,email"`
-	Address       string    `json:"address" binding:"required"`
-	Phone         string    `json:"phone" binding:"required"`
-	BirthDate     time.Time `json:"birthDate" `
-	IdCard        string    `json:"idCard" binding:"required"`
-	IdCardDate    time.Time `json:"idCardDate" `
-	IdCardAddress string    `json:"idCardAddress" binding:"required"`
-	BankId        string    `json:"bankId" binding:"required"`
-	BankOwner     string    `json:"bankOwner" binding:"required"`
-	BankName      string    `json:"bankName" binding:"required"`
-}
-
 type UserLogin struct {
 	UserName string `json:"userName" binding:"required"`
 	Password string `json:"password" binding:"required"`
@@ -69,23 +51,6 @@ func CheckPasswordHash(password, hash string) bool {
 func Santize(data string) string {
 	data = html.EscapeString(strings.TrimSpace(data))
 	return data
-}
-
-var emailRegex = regexp.MustCompile("^[a-zA-Z0-9.!#$%&'*+\\/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*$")
-
-func isEmailValid(e string) bool {
-	if len(e) < 3 && len(e) > 254 {
-		return false
-	}
-	if !emailRegex.MatchString(e) {
-		return false
-	}
-	parts := strings.Split(e, "@")
-	mx, err := net.LookupMX(parts[1])
-	if err != nil || len(mx) == 0 {
-		return false
-	}
-	return true
 }
 
 func (s *Server) RegisterUser(ctx *gin.Context) {
@@ -166,6 +131,14 @@ func (s *Server) LoginUser(ctx *gin.Context) {
 	} else {
 		user, err := s.store.GetByUserName(ctx, req.UserName)
 		if err == nil {
+			if (db.User{}) == user {
+				ResponseErrMsg(ctx, nil, "User not exists ", 1)
+				return
+			}
+			if user.Status <0 {
+				ResponseErrMsg(ctx, nil, "User blocked ", 1)
+				return
+			}
 			if CheckPasswordHash(req.Password, user.Password) {
 				token, _ := token.GenToken(user)
 				ResponseOK(ctx, token)
@@ -173,6 +146,7 @@ func (s *Server) LoginUser(ctx *gin.Context) {
 				ResponseErrMsg(ctx, nil, "Unauthorized", 401)
 			}
 		} else {
+			logrus.Error(err)
 			ResponseErrMsg(ctx, nil, "Unauthorized", 401)
 		}
 	}

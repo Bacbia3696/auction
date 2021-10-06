@@ -82,9 +82,13 @@ VALUES (
        $17,
        $18,
        $19,
-       $20))
+       $20)
     RETURNING
     *;
+
+-- name: GetById :one
+SELECT * FROM users
+WHERE id = $1 LIMIT 1;
 
 -- name: GetByUserName :one
 SELECT * FROM users
@@ -102,4 +106,13 @@ WHERE id_card = $1 LIMIT 1;
 SELECT * FROM users
 WHERE user_name = $1 AND status > 0 LIMIT 1;
 
+-- name: UpdateStatus :one
+UPDATE users
+SET status = $1
+WHERE  id = $2
+    RETURNING
+    *;
+-- name: GetListUser :many
+SELECT * FROM users
+ORDER BY id ASC ;
 

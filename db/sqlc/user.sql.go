@@ -47,7 +47,7 @@ VALUES (
     $15,
     $16)
 RETURNING
-    id, user_name, password, full_name, email, address, phone, birthdate, id_card, id_card_address, id_card_date, bank_id, bank_owner, bank_name, status, created_at, updated_at
+    id, user_name, password, full_name, email, address, phone, birthdate, id_card, id_card_address, id_card_date, bank_id, bank_owner, bank_name, status, organization_name, organization_id, organization_date, organization_address, position, created_at, updated_at
 `
 
 type CreateUserParams struct {
@@ -106,6 +106,133 @@ func (q *Queries) CreateUser(ctx context.Context, arg CreateUserParams) (User, e
 		&i.BankOwner,
 		&i.BankName,
 		&i.Status,
+		&i.OrganizationName,
+		&i.OrganizationID,
+		&i.OrganizationDate,
+		&i.OrganizationAddress,
+		&i.Position,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+	)
+	return i, err
+}
+
+const createUserOrganization = `-- name: CreateUserOrganization :one
+INSERT INTO users (
+    user_name,
+    password,
+    full_name,
+    email,
+    address,
+    phone,
+    birthdate,
+    id_card,
+    id_card_address,
+    id_card_date,
+    bank_id,
+    bank_owner,
+    bank_name,
+    status,
+    organization_name,
+    organization_id ,
+    organization_date ,
+    organization_address,
+    created_at,
+    updated_at
+)
+VALUES (
+       $1,
+       $2,
+       $3,
+       $4,
+       $5,
+       $6,
+       $7,
+       $8,
+       $9,
+       $10,
+       $11,
+       $12,
+       $13,
+       $14,
+       $15,
+       $16,
+       $17,
+       $18,
+       $19,
+       $20)
+    RETURNING
+    id, user_name, password, full_name, email, address, phone, birthdate, id_card, id_card_address, id_card_date, bank_id, bank_owner, bank_name, status, organization_name, organization_id, organization_date, organization_address, position, created_at, updated_at
+`
+
+type CreateUserOrganizationParams struct {
+	UserName            string         `json:"user_name"`
+	Password            string         `json:"password"`
+	FullName            string         `json:"full_name"`
+	Email               string         `json:"email"`
+	Address             string         `json:"address"`
+	Phone               string         `json:"phone"`
+	Birthdate           sql.NullTime   `json:"birthdate"`
+	IDCard              string         `json:"id_card"`
+	IDCardAddress       string         `json:"id_card_address"`
+	IDCardDate          time.Time      `json:"id_card_date"`
+	BankID              string         `json:"bank_id"`
+	BankOwner           string         `json:"bank_owner"`
+	BankName            string         `json:"bank_name"`
+	Status              int32          `json:"status"`
+	OrganizationName    sql.NullString `json:"organization_name"`
+	OrganizationID      sql.NullString `json:"organization_id"`
+	OrganizationDate    sql.NullTime   `json:"organization_date"`
+	OrganizationAddress sql.NullString `json:"organization_address"`
+	CreatedAt           time.Time      `json:"created_at"`
+	UpdatedAt           sql.NullTime   `json:"updated_at"`
+}
+
+func (q *Queries) CreateUserOrganization(ctx context.Context, arg CreateUserOrganizationParams) (User, error) {
+	row := q.db.QueryRowContext(ctx, createUserOrganization,
+		arg.UserName,
+		arg.Password,
+		arg.FullName,
+		arg.Email,
+		arg.Address,
+		arg.Phone,
+		arg.Birthdate,
+		arg.IDCard,
+		arg.IDCardAddress,
+		arg.IDCardDate,
+		arg.BankID,
+		arg.BankOwner,
+		arg.BankName,
+		arg.Status,
+		arg.OrganizationName,
+		arg.OrganizationID,
+		arg.OrganizationDate,
+		arg.OrganizationAddress,
+		arg.CreatedAt,
+		arg.UpdatedAt,
+	)
+	var i User
+	err := row.Scan(
+		&i.ID,
+		&i.UserName,
+		&i.Password,
+		&i.FullName,
+		&i.Email,
+		&i.Address,
+		&i.Phone,
+		&i.Birthdate,
+		&i.IDCard,
+		&i.IDCardAddress,
+		&i.IDCardDate,
+		&i.BankID,
+		&i.BankOwner,
+		&i.BankName,
+		&i.Status,
+		&i.OrganizationName,
+		&i.OrganizationID,
+		&i.OrganizationDate,
+		&i.OrganizationAddress,
+		&i.Position,
 		&i.CreatedAt,
 		&i.UpdatedAt,
 	)
@@ -113,7 +240,7 @@ func (q *Queries) CreateUser(ctx context.Context, arg CreateUserParams) (User, e
 }
 
 const getByEmail = `-- name: GetByEmail :one
-SELECT id, user_name, password, full_name, email, address, phone, birthdate, id_card, id_card_address, id_card_date, bank_id, bank_owner, bank_name, status, created_at, updated_at FROM users
+SELECT id, user_name, password, full_name, email, address, phone, birthdate, id_card, id_card_address, id_card_date, bank_id, bank_owner, bank_name, status, organization_name, organization_id, organization_date, organization_address, position, created_at, updated_at FROM users
 WHERE email = $1 LIMIT 1
 `
 
@@ -136,6 +263,46 @@ func (q *Queries) GetByEmail(ctx context.Context, email string) (User, error) {
 		&i.BankOwner,
 		&i.BankName,
 		&i.Status,
+		&i.OrganizationName,
+		&i.OrganizationID,
+		&i.OrganizationDate,
+		&i.OrganizationAddress,
+		&i.Position,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+	)
+	return i, err
+}
+
+const getById = `-- name: GetById :one
+SELECT id, user_name, password, full_name, email, address, phone, birthdate, id_card, id_card_address, id_card_date, bank_id, bank_owner, bank_name, status, organization_name, organization_id, organization_date, organization_address, position, created_at, updated_at FROM users
+WHERE id = $1 LIMIT 1
+`
+
+func (q *Queries) GetById(ctx context.Context, id int32) (User, error) {
+	row := q.db.QueryRowContext(ctx, getById, id)
+	var i User
+	err := row.Scan(
+		&i.ID,
+		&i.UserName,
+		&i.Password,
+		&i.FullName,
+		&i.Email,
+		&i.Address,
+		&i.Phone,
+		&i.Birthdate,
+		&i.IDCard,
+		&i.IDCardAddress,
+		&i.IDCardDate,
+		&i.BankID,
+		&i.BankOwner,
+		&i.BankName,
+		&i.Status,
+		&i.OrganizationName,
+		&i.OrganizationID,
+		&i.OrganizationDate,
+		&i.OrganizationAddress,
+		&i.Position,
 		&i.CreatedAt,
 		&i.UpdatedAt,
 	)
@@ -143,7 +310,7 @@ func (q *Queries) GetByEmail(ctx context.Context, email string) (User, error) {
 }
 
 const getByIdCard = `-- name: GetByIdCard :one
-SELECT id, user_name, password, full_name, email, address, phone, birthdate, id_card, id_card_address, id_card_date, bank_id, bank_owner, bank_name, status, created_at, updated_at FROM users
+SELECT id, user_name, password, full_name, email, address, phone, birthdate, id_card, id_card_address, id_card_date, bank_id, bank_owner, bank_name, status, organization_name, organization_id, organization_date, organization_address, position, created_at, updated_at FROM users
 WHERE id_card = $1 LIMIT 1
 `
 
@@ -166,6 +333,11 @@ func (q *Queries) GetByIdCard(ctx context.Context, idCard string) (User, error) 
 		&i.BankOwner,
 		&i.BankName,
 		&i.Status,
+		&i.OrganizationName,
+		&i.OrganizationID,
+		&i.OrganizationDate,
+		&i.OrganizationAddress,
+		&i.Position,
 		&i.CreatedAt,
 		&i.UpdatedAt,
 	)
@@ -173,7 +345,7 @@ func (q *Queries) GetByIdCard(ctx context.Context, idCard string) (User, error) 
 }
 
 const getByUserName = `-- name: GetByUserName :one
-SELECT id, user_name, password, full_name, email, address, phone, birthdate, id_card, id_card_address, id_card_date, bank_id, bank_owner, bank_name, status, created_at, updated_at FROM users
+SELECT id, user_name, password, full_name, email, address, phone, birthdate, id_card, id_card_address, id_card_date, bank_id, bank_owner, bank_name, status, organization_name, organization_id, organization_date, organization_address, position, created_at, updated_at FROM users
 WHERE user_name = $1 LIMIT 1
 `
 
@@ -196,6 +368,11 @@ func (q *Queries) GetByUserName(ctx context.Context, userName string) (User, err
 		&i.BankOwner,
 		&i.BankName,
 		&i.Status,
+		&i.OrganizationName,
+		&i.OrganizationID,
+		&i.OrganizationDate,
+		&i.OrganizationAddress,
+		&i.Position,
 		&i.CreatedAt,
 		&i.UpdatedAt,
 	)
@@ -203,7 +380,7 @@ func (q *Queries) GetByUserName(ctx context.Context, userName string) (User, err
 }
 
 const getByUserNameActive = `-- name: GetByUserNameActive :one
-SELECT id, user_name, password, full_name, email, address, phone, birthdate, id_card, id_card_address, id_card_date, bank_id, bank_owner, bank_name, status, created_at, updated_at FROM users
+SELECT id, user_name, password, full_name, email, address, phone, birthdate, id_card, id_card_address, id_card_date, bank_id, bank_owner, bank_name, status, organization_name, organization_id, organization_date, organization_address, position, created_at, updated_at FROM users
 WHERE user_name = $1 AND status > 0 LIMIT 1
 `
 
@@ -226,6 +403,105 @@ func (q *Queries) GetByUserNameActive(ctx context.Context, userName string) (Use
 		&i.BankOwner,
 		&i.BankName,
 		&i.Status,
+		&i.OrganizationName,
+		&i.OrganizationID,
+		&i.OrganizationDate,
+		&i.OrganizationAddress,
+		&i.Position,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+	)
+	return i, err
+}
+
+const getListUser = `-- name: GetListUser :many
+SELECT id, user_name, password, full_name, email, address, phone, birthdate, id_card, id_card_address, id_card_date, bank_id, bank_owner, bank_name, status, organization_name, organization_id, organization_date, organization_address, position, created_at, updated_at FROM users
+ORDER BY id ASC
+`
+
+func (q *Queries) GetListUser(ctx context.Context) ([]User, error) {
+	rows, err := q.db.QueryContext(ctx, getListUser)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []User{}
+	for rows.Next() {
+		var i User
+		if err := rows.Scan(
+			&i.ID,
+			&i.UserName,
+			&i.Password,
+			&i.FullName,
+			&i.Email,
+			&i.Address,
+			&i.Phone,
+			&i.Birthdate,
+			&i.IDCard,
+			&i.IDCardAddress,
+			&i.IDCardDate,
+			&i.BankID,
+			&i.BankOwner,
+			&i.BankName,
+			&i.Status,
+			&i.OrganizationName,
+			&i.OrganizationID,
+			&i.OrganizationDate,
+			&i.OrganizationAddress,
+			&i.Position,
+			&i.CreatedAt,
+			&i.UpdatedAt,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const updateStatus = `-- name: UpdateStatus :one
+UPDATE users
+SET status = $1
+WHERE  id = $2
+    RETURNING
+    id, user_name, password, full_name, email, address, phone, birthdate, id_card, id_card_address, id_card_date, bank_id, bank_owner, bank_name, status, organization_name, organization_id, organization_date, organization_address, position, created_at, updated_at
+`
+
+type UpdateStatusParams struct {
+	Status int32 `json:"status"`
+	ID     int32 `json:"id"`
+}
+
+func (q *Queries) UpdateStatus(ctx context.Context, arg UpdateStatusParams) (User, error) {
+	row := q.db.QueryRowContext(ctx, updateStatus, arg.Status, arg.ID)
+	var i User
+	err := row.Scan(
+		&i.ID,
+		&i.UserName,
+		&i.Password,
+		&i.FullName,
+		&i.Email,
+		&i.Address,
+		&i.Phone,
+		&i.Birthdate,
+		&i.IDCard,
+		&i.IDCardAddress,
+		&i.IDCardDate,
+		&i.BankID,
+		&i.BankOwner,
+		&i.BankName,
+		&i.Status,
+		&i.OrganizationName,
+		&i.OrganizationID,
+		&i.OrganizationDate,
+		&i.OrganizationAddress,
+		&i.Position,
 		&i.CreatedAt,
 		&i.UpdatedAt,
 	)

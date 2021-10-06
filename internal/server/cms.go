@@ -1,55 +1,71 @@
 package server
 
 import (
-	"fmt"
+	db "github.com/bacbia3696/auction/db/sqlc"
 	"github.com/bacbia3696/auction/internal/token"
 	"github.com/gin-gonic/gin"
-	"net/http"
+	"strconv"
 )
 
+const (
+	authorizationPayloadKey = "authorization_payload"
+)
+
+func (s *Server) GetRoleId(ctx *gin.Context) int32 {
+	authPayload := ctx.MustGet(authorizationPayloadKey).(*token.Claims)
+	userId := authPayload.Id
+	roleId, _ := s.store.GetRoleByUserId(ctx, userId)
+	return roleId
+}
+
 func (s *Server) ListUser(ctx *gin.Context) {
-	var req UserLogin
-	if err := ctx.ShouldBindJSON(&req); err != nil {
-		ctx.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+	roleId := s.GetRoleId(ctx)
+	if roleId > 2 {
+		ResponseErrMsg(ctx, nil, "User have not permission", -1)
 		return
-	} else {
-		user, err := s.store.GetByUserName(ctx, req.UserName)
-		if err == nil {
-			if CheckPasswordHash(req.Password, user.Password) {
-				token, _ := token.GenToken(user)
-				ResponseOK(ctx, token)
-			} else {
-				ResponseErrMsg(ctx, nil, "Unauthorized", 401)
-			}
-		} else {
-			ResponseErrMsg(ctx, nil, "Unauthorized", 401)
-		}
 	}
+	users, err := s.store.GetListUser(ctx)
+	if err == nil {
+		ResponseOK(ctx, users)
+		return
+	}
+	ResponseErrMsg(ctx, nil, " Fail", -1)
 }
 
 func (s *Server) VerifyUser(ctx *gin.Context) {
-	userId := ctx.Query("userId")
-	fmt.Print(userId)
-	ResponseErrMsg(ctx, nil, "okie", 401)
-
+	roleId := s.GetRoleId(ctx)
+	if roleId > 2 {
+		ResponseErrMsg(ctx, nil, "User have not permission", -1)
+		return
+	}
+	uid, _ := strconv.Atoi(ctx.Query("userId"))
+	checkUser, err := s.store.GetById(ctx, int32(uid))
+	if err == nil {
+		if (db.User{}) != checkUser {
+			_, _ = s.store.UpdateStatus(ctx, db.UpdateStatusParams{
+				Status: 1,
+				ID:     int32(uid),
+			})
+		}
+	}
+	ResponseOK(ctx, nil)
 }
 
 func (s *Server) LockUser(ctx *gin.Context) {
-	var req UserLogin
-	if err := ctx.ShouldBindJSON(&req); err != nil {
-		ctx.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+	roleId := s.GetRoleId(ctx)
+	if roleId > 2 {
+		ResponseErrMsg(ctx, nil, "User have not permission", -1)
 		return
-	} else {
-		user, err := s.store.GetByUserName(ctx, req.UserName)
-		if err == nil {
-			if CheckPasswordHash(req.Password, user.Password) {
-				token, _ := token.GenToken(user)
-				ResponseOK(ctx, token)
-			} else {
-				ResponseErrMsg(ctx, nil, "Unauthorized", 401)
-			}
-		} else {
-			ResponseErrMsg(ctx, nil, "Unauthorized", 401)
+	}
+	uid, _ := strconv.Atoi(ctx.Query("userId"))
+	checkUser, err := s.store.GetById(ctx, int32(uid))
+	if err == nil {
+		if (db.User{}) != checkUser {
+			_, _ = s.store.UpdateStatus(ctx, db.UpdateStatusParams{
+				Status: -1,
+				ID:     int32(uid),
+			})
 		}
 	}
+	ResponseOK(ctx, nil)
 }

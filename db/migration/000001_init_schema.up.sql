@@ -14,11 +14,11 @@ CREATE TABLE users (
     bank_owner text NOT NULL,
     bank_name text NOT NULL,
     status integer NOT NULL,
-    organization_name text NOT NULL,
-    organization_id text NOT NULL,
-    organization_date date NOT NULL,
-    organization_address text NOT NULL,
-    position text NOT NULL,
+    organization_name text ,
+    organization_id text ,
+    organization_date date ,
+    organization_address text ,
+    position text,
     created_at  timestamptz NOT NULL DEFAULT (now()),
     updated_at timestamptz
 );

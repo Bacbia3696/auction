@@ -13,23 +13,28 @@ type Role struct {
 }
 
 type User struct {
-	ID            int32        `json:"id"`
-	UserName      string       `json:"user_name"`
-	Password      string       `json:"password"`
-	FullName      string       `json:"full_name"`
-	Email         string       `json:"email"`
-	Address       string       `json:"address"`
-	Phone         string       `json:"phone"`
-	Birthdate     sql.NullTime `json:"birthdate"`
-	IDCard        string       `json:"id_card"`
-	IDCardAddress string       `json:"id_card_address"`
-	IDCardDate    time.Time    `json:"id_card_date"`
-	BankID        string       `json:"bank_id"`
-	BankOwner     string       `json:"bank_owner"`
-	BankName      string       `json:"bank_name"`
-	Status        int32        `json:"status"`
-	CreatedAt     time.Time    `json:"created_at"`
-	UpdatedAt     sql.NullTime `json:"updated_at"`
+	ID                  int32          `json:"id"`
+	UserName            string         `json:"user_name"`
+	Password            string         `json:"-"`
+	FullName            string         `json:"full_name"`
+	Email               string         `json:"email"`
+	Address             string         `json:"address"`
+	Phone               string         `json:"phone"`
+	Birthdate           sql.NullTime   `json:"birthdate"`
+	IDCard              string         `json:"id_card"`
+	IDCardAddress       string         `json:"id_card_address"`
+	IDCardDate          time.Time      `json:"id_card_date"`
+	BankID              string         `json:"bank_id"`
+	BankOwner           string         `json:"bank_owner"`
+	BankName            string         `json:"bank_name"`
+	Status              int32          `json:"status"`
+	OrganizationName    sql.NullString `json:"organization_name"`
+	OrganizationID      sql.NullString `json:"organization_id"`
+	OrganizationDate    sql.NullTime   `json:"organization_date"`
+	OrganizationAddress sql.NullString `json:"organization_address"`
+	Position            sql.NullString `json:"position"`
+	CreatedAt           time.Time      `json:"created_at"`
+	UpdatedAt           sql.NullTime   `json:"updated_at"`
 }
 
 type UserImage struct {

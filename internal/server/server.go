@@ -41,9 +41,9 @@ func (server *Server) setupRouter() {
 
 	authRoutes := router.Group("/").Use(middleware.AuthMiddleware())
 	{
-		authRoutes.GET("/verify", server.VerifyUser)
-		authRoutes.GET("/lock", server.LockUser)
-		authRoutes.GET("/list-user", server.ListUser)
+		authRoutes.GET("/cms/verify", server.VerifyUser)
+		authRoutes.GET("/cms/lock", server.LockUser)
+		authRoutes.GET("/cms/list-user", server.ListUser)
 	}
 	server.router = router
 }
