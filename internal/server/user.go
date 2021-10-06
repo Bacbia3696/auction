@@ -1,6 +1,7 @@
 package server
 
 import (
+	"github.com/asaskevich/govalidator"
 	"golang.org/x/crypto/bcrypt"
 	"html"
 	"net"
@@ -9,7 +10,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/asaskevich/govalidator"
 	db "github.com/bacbia3696/auction/db/sqlc"
 	"github.com/bacbia3696/auction/internal/token"
 	"github.com/gin-gonic/gin"
@@ -17,20 +17,40 @@ import (
 )
 
 type createUserRequest struct {
-	RoleId int `json:"roleId" binding:"required"`
-	UserName string `json:"userName" binding:"required"`
-	Password string `json:"password" binding:"required,min=6"`
-	FullName string `json:"fullName" binding:"required"`
-	Email string `json:"email" binding:"required,email"`
-	Address string `json:"address" binding:"required"`
-	Phone string `json:"phone" binding:"required"`
-	BirthDate time.Time `json:"birthDate" `
-	IdCard string `json:"idCard" binding:"required"`
-	IdCardDate time.Time `json:"idCardDate" `
-	IdCardAddress string `json:"idCardAddress" binding:"required"`
-	BankId string `json:"bankId" binding:"required"`
-	BankOwner string `json:"bankOwner" binding:"required"`
-	BankName string `json:"bankName" binding:"required"`
+	RoleId        int32      `json:"roleId" binding:"required"`
+	UserName      string    `json:"userName" binding:"required"`
+	Password      string    `json:"password" binding:"required,min=6"`
+	FullName      string    `json:"fullName" binding:"required"`
+	Email         string    `json:"email" binding:"required,email"`
+	Address       string    `json:"address" binding:"required"`
+	Phone         string    `json:"phone" binding:"required"`
+	BirthDate     time.Time `json:"birthDate" `
+	IdCard        string    `json:"idCard" binding:"required"`
+	IdCardDate    time.Time `json:"idCardDate" `
+	IdCardAddress string    `json:"idCardAddress" binding:"required"`
+	BankId        string    `json:"bankId" binding:"required"`
+	BankOwner     string    `json:"bankOwner" binding:"required"`
+	BankName      string    `json:"bankName" binding:"required"`
+	OrganizationName string    `json:"organizationName"`
+	OrganizationId        string    `json:"organizationId"`
+	OrganizationDate     string    `json:"organizationDate"`
+	OrganizationAddress      string    `json:"organizationAddress"`
+}
+type createUserOrganizationRequest struct {
+	RoleId        int32      `json:"roleId" binding:"required"`
+	UserName      string    `json:"userName" binding:"required"`
+	Password      string    `json:"password" binding:"required,min=6"`
+	FullName      string    `json:"fullName" binding:"required"`
+	Email         string    `json:"email" binding:"required,email"`
+	Address       string    `json:"address" binding:"required"`
+	Phone         string    `json:"phone" binding:"required"`
+	BirthDate     time.Time `json:"birthDate" `
+	IdCard        string    `json:"idCard" binding:"required"`
+	IdCardDate    time.Time `json:"idCardDate" `
+	IdCardAddress string    `json:"idCardAddress" binding:"required"`
+	BankId        string    `json:"bankId" binding:"required"`
+	BankOwner     string    `json:"bankOwner" binding:"required"`
+	BankName      string    `json:"bankName" binding:"required"`
 }
 
 type UserLogin struct {
@@ -46,10 +66,11 @@ func CheckPasswordHash(password, hash string) bool {
 	err := bcrypt.CompareHashAndPassword([]byte(hash), []byte(password))
 	return err == nil
 }
-func Santize(data string) string{
+func Santize(data string) string {
 	data = html.EscapeString(strings.TrimSpace(data))
 	return data
 }
+
 var emailRegex = regexp.MustCompile("^[a-zA-Z0-9.!#$%&'*+\\/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*$")
 
 func isEmailValid(e string) bool {
@@ -70,34 +91,43 @@ func isEmailValid(e string) bool {
 func (s *Server) RegisterUser(ctx *gin.Context) {
 	var req createUserRequest
 	if err := ctx.ShouldBindJSON(&req); err != nil {
-		responeErr(ctx, err, 1)
+		ResponseErr(ctx, err, 1)
 		return
 	}
-	if govalidator.IsNull(req.UserName) {
-		responeErr(ctx, nil, 1)
+	//check roleId
+	if req.RoleId < 2 || req.RoleId > 4 {
+		ResponseErrMsg(ctx, nil, "RoleId invalid", -1)
 		return
 	}
+	// organization
+	if req.RoleId == 4{
+		if govalidator.IsNull(req.OrganizationName) ||  govalidator.IsNull(req.OrganizationId)||  govalidator.IsNull(req.OrganizationAddress){
+			ResponseErrMsg(ctx, nil, "Input invalid",1)
+			return
+		}
+	}
+
 	//checkUsername
 	checkUsername, err := s.store.GetByUserName(ctx, req.UserName)
 	if err == nil {
-		if (db.User{}) != checkUsername{
-			responeErrMsg(ctx, nil,"Username already exists ", 403)
+		if (db.User{}) != checkUsername {
+			ResponseErrMsg(ctx, nil, "Username already exists ", 403)
 			return
 		}
 	}
 	//checkIdCard
 	checkIdCard, err := s.store.GetByIdCard(ctx, req.IdCard)
 	if err == nil {
-		if (db.User{}) != checkIdCard{
-			responeErrMsg(ctx, nil,"IdCard already exists ", 403)
+		if (db.User{}) != checkIdCard {
+			ResponseErrMsg(ctx, nil, "IdCard already exists ", 403)
 			return
 		}
 	}
 	//checkEmail
 	checkEmail, err := s.store.GetByEmail(ctx, req.Email)
 	if err == nil {
-		if (db.User{}) != checkEmail{
-			responeErrMsg(ctx, nil,"Email already exists ", 403)
+		if (db.User{}) != checkEmail {
+			ResponseErrMsg(ctx, nil, "Email already exists ", 403)
 			return
 		}
 	}
@@ -107,16 +137,23 @@ func (s *Server) RegisterUser(ctx *gin.Context) {
 	params := db.CreateUserParams{}
 	copier.Copy(&params, req)
 	params.Password = HashPassword(req.Password)
-	params.Username = req.UserName
-	params.Fullname = req.FullName
-	params.Idcard = req.IdCard
-	params.Idcardaddress= req.IdCardAddress
-	params.Bankid= req.BankId
-	params.Bankname= req.BankName
-	params.Bankowner= req.BankOwner
+	params.UserName = req.UserName
+	params.FullName = req.FullName
+	params.IDCard = req.IdCard
+	params.IDCardAddress = req.IdCardAddress
+	params.BankID = req.BankId
+	params.BankName = req.BankName
+	params.BankOwner = req.BankOwner
 	user, err := s.store.CreateUser(ctx, params)
 	if err != nil {
-		responeErr(ctx, err,1)
+		ResponseErr(ctx, err, 1)
+		return
+	}
+	//add user role
+	userRoleParam := db.CreateUserRoleParams{UserID: user.ID, RoleID: req.RoleId}
+	_, err = s.store.CreateUserRole(ctx, userRoleParam)
+	if err != nil {
+		ResponseErr(ctx, err, 1)
 		return
 	}
 	ctx.JSON(http.StatusOK, user)
@@ -129,14 +166,14 @@ func (s *Server) LoginUser(ctx *gin.Context) {
 	} else {
 		user, err := s.store.GetByUserName(ctx, req.UserName)
 		if err == nil {
-			if CheckPasswordHash(req.Password,user.Password){
+			if CheckPasswordHash(req.Password, user.Password) {
 				token, _ := token.GenToken(user)
-				responseOK(ctx, token)
+				ResponseOK(ctx, token)
 			} else {
-				responeErrMsg(ctx, nil,"Unauthorized", 401)
+				ResponseErrMsg(ctx, nil, "Unauthorized", 401)
 			}
-		}else{
-			responeErrMsg(ctx, nil,"Unauthorized", 401)
+		} else {
+			ResponseErrMsg(ctx, nil, "Unauthorized", 401)
 		}
 	}
 }

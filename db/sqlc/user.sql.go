@@ -12,22 +12,22 @@ import (
 const createUser = `-- name: CreateUser :one
 
 INSERT INTO users (
-    UserName,
-    Password,
-    FullName,
-    Email,
-    Address,
-    Phone,
-    BirthDate,
-    IdCard,
-    IdCardAddress,
-    IdCardDate,
-    BankId,
-    BankOwner,
-    BankName,
-    Status,
-    CreatedAt,
-    UpdatedAt
+    user_name,
+    password,
+    full_name,
+    email,
+    address,
+    phone,
+    birthdate,
+    id_card,
+    id_card_address,
+    id_card_date,
+    bank_id,
+    bank_owner,
+    bank_name,
+    status,
+    created_at,
+    updated_at
     )
 VALUES (
     $1,
@@ -47,74 +47,74 @@ VALUES (
     $15,
     $16)
 RETURNING
-    id, username, password, fullname, email, address, phone, birthdate, idcard, idcardaddress, idcarddate, bankid, bankowner, bankname, status, createdat, updatedat
+    id, user_name, password, full_name, email, address, phone, birthdate, id_card, id_card_address, id_card_date, bank_id, bank_owner, bank_name, status, created_at, updated_at
 `
 
 type CreateUserParams struct {
-	Username      string       `json:"username"`
+	UserName      string       `json:"user_name"`
 	Password      string       `json:"password"`
-	Fullname      string       `json:"fullname"`
+	FullName      string       `json:"full_name"`
 	Email         string       `json:"email"`
 	Address       string       `json:"address"`
 	Phone         string       `json:"phone"`
 	Birthdate     sql.NullTime `json:"birthdate"`
-	Idcard        string       `json:"idcard"`
-	Idcardaddress string       `json:"idcardaddress"`
-	Idcarddate    time.Time    `json:"idcarddate"`
-	Bankid        string       `json:"bankid"`
-	Bankowner     string       `json:"bankowner"`
-	Bankname      string       `json:"bankname"`
+	IDCard        string       `json:"id_card"`
+	IDCardAddress string       `json:"id_card_address"`
+	IDCardDate    time.Time    `json:"id_card_date"`
+	BankID        string       `json:"bank_id"`
+	BankOwner     string       `json:"bank_owner"`
+	BankName      string       `json:"bank_name"`
 	Status        int32        `json:"status"`
-	Createdat     time.Time    `json:"createdat"`
-	Updatedat     sql.NullTime `json:"updatedat"`
+	CreatedAt     time.Time    `json:"created_at"`
+	UpdatedAt     sql.NullTime `json:"updated_at"`
 }
 
 // query.sql
 func (q *Queries) CreateUser(ctx context.Context, arg CreateUserParams) (User, error) {
 	row := q.db.QueryRowContext(ctx, createUser,
-		arg.Username,
+		arg.UserName,
 		arg.Password,
-		arg.Fullname,
+		arg.FullName,
 		arg.Email,
 		arg.Address,
 		arg.Phone,
 		arg.Birthdate,
-		arg.Idcard,
-		arg.Idcardaddress,
-		arg.Idcarddate,
-		arg.Bankid,
-		arg.Bankowner,
-		arg.Bankname,
+		arg.IDCard,
+		arg.IDCardAddress,
+		arg.IDCardDate,
+		arg.BankID,
+		arg.BankOwner,
+		arg.BankName,
 		arg.Status,
-		arg.Createdat,
-		arg.Updatedat,
+		arg.CreatedAt,
+		arg.UpdatedAt,
 	)
 	var i User
 	err := row.Scan(
 		&i.ID,
-		&i.Username,
+		&i.UserName,
 		&i.Password,
-		&i.Fullname,
+		&i.FullName,
 		&i.Email,
 		&i.Address,
 		&i.Phone,
 		&i.Birthdate,
-		&i.Idcard,
-		&i.Idcardaddress,
-		&i.Idcarddate,
-		&i.Bankid,
-		&i.Bankowner,
-		&i.Bankname,
+		&i.IDCard,
+		&i.IDCardAddress,
+		&i.IDCardDate,
+		&i.BankID,
+		&i.BankOwner,
+		&i.BankName,
 		&i.Status,
-		&i.Createdat,
-		&i.Updatedat,
+		&i.CreatedAt,
+		&i.UpdatedAt,
 	)
 	return i, err
 }
 
 const getByEmail = `-- name: GetByEmail :one
-SELECT id, username, password, fullname, email, address, phone, birthdate, idcard, idcardaddress, idcarddate, bankid, bankowner, bankname, status, createdat, updatedat FROM users
-WHERE Email = $1 LIMIT 1
+SELECT id, user_name, password, full_name, email, address, phone, birthdate, id_card, id_card_address, id_card_date, bank_id, bank_owner, bank_name, status, created_at, updated_at FROM users
+WHERE email = $1 LIMIT 1
 `
 
 func (q *Queries) GetByEmail(ctx context.Context, email string) (User, error) {
@@ -122,112 +122,112 @@ func (q *Queries) GetByEmail(ctx context.Context, email string) (User, error) {
 	var i User
 	err := row.Scan(
 		&i.ID,
-		&i.Username,
+		&i.UserName,
 		&i.Password,
-		&i.Fullname,
+		&i.FullName,
 		&i.Email,
 		&i.Address,
 		&i.Phone,
 		&i.Birthdate,
-		&i.Idcard,
-		&i.Idcardaddress,
-		&i.Idcarddate,
-		&i.Bankid,
-		&i.Bankowner,
-		&i.Bankname,
+		&i.IDCard,
+		&i.IDCardAddress,
+		&i.IDCardDate,
+		&i.BankID,
+		&i.BankOwner,
+		&i.BankName,
 		&i.Status,
-		&i.Createdat,
-		&i.Updatedat,
+		&i.CreatedAt,
+		&i.UpdatedAt,
 	)
 	return i, err
 }
 
 const getByIdCard = `-- name: GetByIdCard :one
-SELECT id, username, password, fullname, email, address, phone, birthdate, idcard, idcardaddress, idcarddate, bankid, bankowner, bankname, status, createdat, updatedat FROM users
-WHERE IdCard = $1 LIMIT 1
+SELECT id, user_name, password, full_name, email, address, phone, birthdate, id_card, id_card_address, id_card_date, bank_id, bank_owner, bank_name, status, created_at, updated_at FROM users
+WHERE id_card = $1 LIMIT 1
 `
 
-func (q *Queries) GetByIdCard(ctx context.Context, idcard string) (User, error) {
-	row := q.db.QueryRowContext(ctx, getByIdCard, idcard)
+func (q *Queries) GetByIdCard(ctx context.Context, idCard string) (User, error) {
+	row := q.db.QueryRowContext(ctx, getByIdCard, idCard)
 	var i User
 	err := row.Scan(
 		&i.ID,
-		&i.Username,
+		&i.UserName,
 		&i.Password,
-		&i.Fullname,
+		&i.FullName,
 		&i.Email,
 		&i.Address,
 		&i.Phone,
 		&i.Birthdate,
-		&i.Idcard,
-		&i.Idcardaddress,
-		&i.Idcarddate,
-		&i.Bankid,
-		&i.Bankowner,
-		&i.Bankname,
+		&i.IDCard,
+		&i.IDCardAddress,
+		&i.IDCardDate,
+		&i.BankID,
+		&i.BankOwner,
+		&i.BankName,
 		&i.Status,
-		&i.Createdat,
-		&i.Updatedat,
+		&i.CreatedAt,
+		&i.UpdatedAt,
 	)
 	return i, err
 }
 
 const getByUserName = `-- name: GetByUserName :one
-SELECT id, username, password, fullname, email, address, phone, birthdate, idcard, idcardaddress, idcarddate, bankid, bankowner, bankname, status, createdat, updatedat FROM users
-WHERE UserName = $1 LIMIT 1
+SELECT id, user_name, password, full_name, email, address, phone, birthdate, id_card, id_card_address, id_card_date, bank_id, bank_owner, bank_name, status, created_at, updated_at FROM users
+WHERE user_name = $1 LIMIT 1
 `
 
-func (q *Queries) GetByUserName(ctx context.Context, username string) (User, error) {
-	row := q.db.QueryRowContext(ctx, getByUserName, username)
+func (q *Queries) GetByUserName(ctx context.Context, userName string) (User, error) {
+	row := q.db.QueryRowContext(ctx, getByUserName, userName)
 	var i User
 	err := row.Scan(
 		&i.ID,
-		&i.Username,
+		&i.UserName,
 		&i.Password,
-		&i.Fullname,
+		&i.FullName,
 		&i.Email,
 		&i.Address,
 		&i.Phone,
 		&i.Birthdate,
-		&i.Idcard,
-		&i.Idcardaddress,
-		&i.Idcarddate,
-		&i.Bankid,
-		&i.Bankowner,
-		&i.Bankname,
+		&i.IDCard,
+		&i.IDCardAddress,
+		&i.IDCardDate,
+		&i.BankID,
+		&i.BankOwner,
+		&i.BankName,
 		&i.Status,
-		&i.Createdat,
-		&i.Updatedat,
+		&i.CreatedAt,
+		&i.UpdatedAt,
 	)
 	return i, err
 }
 
 const getByUserNameActive = `-- name: GetByUserNameActive :one
-SELECT id, username, password, fullname, email, address, phone, birthdate, idcard, idcardaddress, idcarddate, bankid, bankowner, bankname, status, createdat, updatedat FROM users
-WHERE UserName = $1 AND Status = 1 LIMIT 1
+SELECT id, user_name, password, full_name, email, address, phone, birthdate, id_card, id_card_address, id_card_date, bank_id, bank_owner, bank_name, status, created_at, updated_at FROM users
+WHERE user_name = $1 AND status > 0 LIMIT 1
 `
 
-func (q *Queries) GetByUserNameActive(ctx context.Context, username string) (User, error) {
-	row := q.db.QueryRowContext(ctx, getByUserNameActive, username)
+func (q *Queries) GetByUserNameActive(ctx context.Context, userName string) (User, error) {
+	row := q.db.QueryRowContext(ctx, getByUserNameActive, userName)
 	var i User
 	err := row.Scan(
 		&i.ID,
-		&i.Username,
+		&i.UserName,
 		&i.Password,
-		&i.Fullname,
+		&i.FullName,
 		&i.Email,
 		&i.Address,
 		&i.Phone,
 		&i.Birthdate,
-		&i.Idcard,
-		&i.Idcardaddress,
-		&i.Idcarddate,
-		&i.Bankid,
-		&i.Bankowner,
-		&i.Bankname,
+		&i.IDCard,
+		&i.IDCardAddress,
+		&i.IDCardDate,
+		&i.BankID,
+		&i.BankOwner,
+		&i.BankName,
 		&i.Status,
-		&i.Createdat,
-		&i.Updatedat,
+		&i.CreatedAt,
+		&i.UpdatedAt,
 	)
 	return i, err
 }

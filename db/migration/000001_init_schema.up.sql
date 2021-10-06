@@ -1,35 +1,40 @@
 CREATE TABLE users (
-    Id  serial PRIMARY KEY,
-    UserName text NOT NULL,
-    Password text NOT NULL,
-    FullName text NOT NULL,
-    Email text NOT NULL,
-    Address text NOT NULL,
-    Phone text NOT NULL,
-    BirthDate date,
-    IdCard text NOT NULL,
-    IdCardAddress text NOT NULL,
-    IdCardDate date NOT NULL,
-    BankId text NOT NULL,
-    BankOwner text NOT NULL,
-    BankName text NOT NULL,
-    Status integer NOT NULL,
-    CreatedAt  timestamptz NOT NULL DEFAULT (now()),
-    UpdatedAt timestamptz
+    id  serial PRIMARY KEY,
+    user_name text NOT NULL,
+    password text NOT NULL,
+    full_name text NOT NULL,
+    email text NOT NULL,
+    address text NOT NULL,
+    phone text NOT NULL,
+    birthdate date,
+    id_card text NOT NULL,
+    id_card_address text NOT NULL,
+    id_card_date date NOT NULL,
+    bank_id text NOT NULL,
+    bank_owner text NOT NULL,
+    bank_name text NOT NULL,
+    status integer NOT NULL,
+    organization_name text NOT NULL,
+    organization_id text NOT NULL,
+    organization_date date NOT NULL,
+    organization_address text NOT NULL,
+    position text NOT NULL,
+    created_at  timestamptz NOT NULL DEFAULT (now()),
+    updated_at timestamptz
 );
 CREATE TABLE user_images (
-    Id  serial PRIMARY KEY,
-    UserId  int  NOT NULL,
-    Url text NOT NULL
+    id  serial PRIMARY KEY,
+    user_id  int  NOT NULL,
+    url text NOT NULL
 );
 
 CREATE TABLE role (
-   Id  serial PRIMARY KEY,
-   Name text NOT NULL
+   id  serial PRIMARY KEY,
+   name text NOT NULL
 );
 
 CREATE TABLE user_role (
-  Id  serial PRIMARY KEY,
-  UserId int NOT NULL,
-  RoleId int NOT NULL
+  id  serial PRIMARY KEY,
+  user_id int NOT NULL,
+  role_id int NOT NULL
 );

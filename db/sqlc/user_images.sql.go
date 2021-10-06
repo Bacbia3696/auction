@@ -10,37 +10,37 @@ import (
 const createUserImage = `-- name: CreateUserImage :one
 
 INSERT INTO user_images (
-    UserId,
-    Url
+    user_id,
+    url
 )
 VALUES (
    $1,
    $2
     )
     RETURNING
-    id, userid, url
+    id, user_id, url
 `
 
 type CreateUserImageParams struct {
-	Userid int32  `json:"userid"`
+	UserID int32  `json:"user_id"`
 	Url    string `json:"url"`
 }
 
 // query.sql
 func (q *Queries) CreateUserImage(ctx context.Context, arg CreateUserImageParams) (UserImage, error) {
-	row := q.db.QueryRowContext(ctx, createUserImage, arg.Userid, arg.Url)
+	row := q.db.QueryRowContext(ctx, createUserImage, arg.UserID, arg.Url)
 	var i UserImage
-	err := row.Scan(&i.ID, &i.Userid, &i.Url)
+	err := row.Scan(&i.ID, &i.UserID, &i.Url)
 	return i, err
 }
 
 const listImage = `-- name: ListImage :many
-SELECT id, userid, url FROM user_images
-WHERE UserId = $1
+SELECT id, user_id, url FROM user_images
+WHERE user_id = $1
 `
 
-func (q *Queries) ListImage(ctx context.Context, userid int32) ([]UserImage, error) {
-	rows, err := q.db.QueryContext(ctx, listImage, userid)
+func (q *Queries) ListImage(ctx context.Context, userID int32) ([]UserImage, error) {
+	rows, err := q.db.QueryContext(ctx, listImage, userID)
 	if err != nil {
 		return nil, err
 	}
@@ -48,7 +48,7 @@ func (q *Queries) ListImage(ctx context.Context, userid int32) ([]UserImage, err
 	items := []UserImage{}
 	for rows.Next() {
 		var i UserImage
-		if err := rows.Scan(&i.ID, &i.Userid, &i.Url); err != nil {
+		if err := rows.Scan(&i.ID, &i.UserID, &i.Url); err != nil {
 			return nil, err
 		}
 		items = append(items, i)

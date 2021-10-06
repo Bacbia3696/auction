@@ -4,4 +4,4 @@
 
 -- name: ListRole :many
 SELECT * FROM role
-ORDER BY Id;
+ORDER BY id;

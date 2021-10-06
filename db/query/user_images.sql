@@ -2,8 +2,8 @@
 
 -- name: CreateUserImage :one
 INSERT INTO user_images (
-    UserId,
-    Url
+    user_id,
+    url
 )
 VALUES (
    $1,
@@ -13,4 +13,4 @@ VALUES (
     *;
 -- name: ListImage :many
 SELECT * FROM user_images
-WHERE UserId = $1;
+WHERE user_id = $1;

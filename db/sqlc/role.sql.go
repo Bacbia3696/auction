@@ -11,7 +11,7 @@ const listRole = `-- name: ListRole :many
 
 
 SELECT id, name FROM role
-ORDER BY Id
+ORDER BY id
 `
 
 // query.sql

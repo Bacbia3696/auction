@@ -10,38 +10,38 @@ import (
 const createUserRole = `-- name: CreateUserRole :one
 
 INSERT INTO user_role(
-    UserId,
-    RoleId
+    user_id,
+    role_id
 )
 VALUES (
     $1,
     $2
        )
     RETURNING
-    id, userid, roleid
+    id, user_id, role_id
 `
 
 type CreateUserRoleParams struct {
-	Userid int32 `json:"userid"`
-	Roleid int32 `json:"roleid"`
+	UserID int32 `json:"user_id"`
+	RoleID int32 `json:"role_id"`
 }
 
 // query.sql
 func (q *Queries) CreateUserRole(ctx context.Context, arg CreateUserRoleParams) (UserRole, error) {
-	row := q.db.QueryRowContext(ctx, createUserRole, arg.Userid, arg.Roleid)
+	row := q.db.QueryRowContext(ctx, createUserRole, arg.UserID, arg.RoleID)
 	var i UserRole
-	err := row.Scan(&i.ID, &i.Userid, &i.Roleid)
+	err := row.Scan(&i.ID, &i.UserID, &i.RoleID)
 	return i, err
 }
 
 const getRoleByUserId = `-- name: GetRoleByUserId :one
-SELECT RoleId FROM user_role
-WHERE UserId = $1 LIMIT 1
+SELECT role_id FROM user_role
+WHERE user_id = $1 LIMIT 1
 `
 
-func (q *Queries) GetRoleByUserId(ctx context.Context, userid int32) (int32, error) {
-	row := q.db.QueryRowContext(ctx, getRoleByUserId, userid)
-	var roleid int32
-	err := row.Scan(&roleid)
-	return roleid, err
+func (q *Queries) GetRoleByUserId(ctx context.Context, userID int32) (int32, error) {
+	row := q.db.QueryRowContext(ctx, getRoleByUserId, userID)
+	var role_id int32
+	err := row.Scan(&role_id)
+	return role_id, err
 }

@@ -4,6 +4,7 @@ import (
 	db "github.com/bacbia3696/auction/db/sqlc"
 	"github.com/bacbia3696/auction/internal/config"
 	"github.com/bacbia3696/auction/internal/constant"
+	"github.com/bacbia3696/auction/middleware"
 	"github.com/gin-gonic/gin"
 )
 
@@ -36,6 +37,13 @@ func (server *Server) setupRouter() {
 	{
 		v1.POST("/register", server.RegisterUser)
 		v1.POST("/login", server.LoginUser)
+	}
+
+	authRoutes := router.Group("/").Use(middleware.AuthMiddleware())
+	{
+		authRoutes.GET("/verify", server.VerifyUser)
+		authRoutes.GET("/lock", server.LockUser)
+		authRoutes.GET("/list-user", server.ListUser)
 	}
 	server.router = router
 }

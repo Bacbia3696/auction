@@ -14,32 +14,32 @@ type Role struct {
 
 type User struct {
 	ID            int32        `json:"id"`
-	Username      string       `json:"username"`
+	UserName      string       `json:"user_name"`
 	Password      string       `json:"password"`
-	Fullname      string       `json:"fullname"`
+	FullName      string       `json:"full_name"`
 	Email         string       `json:"email"`
 	Address       string       `json:"address"`
 	Phone         string       `json:"phone"`
 	Birthdate     sql.NullTime `json:"birthdate"`
-	Idcard        string       `json:"idcard"`
-	Idcardaddress string       `json:"idcardaddress"`
-	Idcarddate    time.Time    `json:"idcarddate"`
-	Bankid        string       `json:"bankid"`
-	Bankowner     string       `json:"bankowner"`
-	Bankname      string       `json:"bankname"`
+	IDCard        string       `json:"id_card"`
+	IDCardAddress string       `json:"id_card_address"`
+	IDCardDate    time.Time    `json:"id_card_date"`
+	BankID        string       `json:"bank_id"`
+	BankOwner     string       `json:"bank_owner"`
+	BankName      string       `json:"bank_name"`
 	Status        int32        `json:"status"`
-	Createdat     time.Time    `json:"createdat"`
-	Updatedat     sql.NullTime `json:"updatedat"`
+	CreatedAt     time.Time    `json:"created_at"`
+	UpdatedAt     sql.NullTime `json:"updated_at"`
 }
 
 type UserImage struct {
 	ID     int32  `json:"id"`
-	Userid int32  `json:"userid"`
+	UserID int32  `json:"user_id"`
 	Url    string `json:"url"`
 }
 
 type UserRole struct {
 	ID     int32 `json:"id"`
-	Userid int32 `json:"userid"`
-	Roleid int32 `json:"roleid"`
+	UserID int32 `json:"user_id"`
+	RoleID int32 `json:"role_id"`
 }

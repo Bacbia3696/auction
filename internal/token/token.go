@@ -17,7 +17,7 @@ var jwtKey = []byte("abcdefghijklmnopq") //config.Get().TokenSignKey
 func GenToken(user db.User) (string, error) {
 	expirationTime := time.Now().Add(120 * time.Second)
 	claims := &Claims{
-		Name: user.Username,
+		Name: user.UserName,
 		Id:   user.ID,
 		StandardClaims: jwt.StandardClaims{
 			ExpiresAt: expirationTime.Unix(),
@@ -31,7 +31,8 @@ func GenToken(user db.User) (string, error) {
 
 
 func Verify(tokenString string) (*Claims, error) {
-	token, err := jwt.Parse(tokenString, func(*jwt.Token) (interface{}, error) {
+	tk := &Claims{}
+	token, err := jwt.ParseWithClaims(tokenString, tk, func(token *jwt.Token) (interface{}, error) {
 		return jwtKey, nil
 	})
 	if token.Valid {

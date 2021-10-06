@@ -9,7 +9,7 @@ import (
 	"github.com/go-playground/locales/en"
 	ut "github.com/go-playground/universal-translator"
 	"github.com/go-playground/validator/v10"
-	en_translations "github.com/go-playground/validator/v10/translations/en"
+	entranslations "github.com/go-playground/validator/v10/translations/en"
 	"github.com/sirupsen/logrus"
 )
 
@@ -28,12 +28,12 @@ func transInit() {
 		en := en.New()
 		uni = ut.New(en, en)
 		trans, _ = uni.GetTranslator("en")
-		_ = en_translations.RegisterDefaultTranslations(v, trans)
+		_ = entranslations.RegisterDefaultTranslations(v, trans)
 	}
 	logrus.Info("Error trying to setup translation")
 }
 
-func responseOK(ctx *gin.Context, data interface{}) {
+func ResponseOK(ctx *gin.Context, data interface{}) {
 	ctx.JSON(http.StatusOK, gin.H{
 		"data": data,
 		"code": 0,
@@ -41,7 +41,7 @@ func responseOK(ctx *gin.Context, data interface{}) {
 	})
 }
 
-func responeErr(ctx *gin.Context, err error, code int) {
+func ResponseErr(ctx *gin.Context, err error, code int) {
 	var req gin.H
 	msg := err.Error()
 	if validatorErrs, ok := err.(validator.ValidationErrors); ok && len(validatorErrs) > 0 {
@@ -59,7 +59,7 @@ func responeErr(ctx *gin.Context, err error, code int) {
 	ctx.JSON(http.StatusOK, req)
 }
 
-func responeErrMsg(ctx *gin.Context, data interface{}, msg string , code int) {
+func ResponseErrMsg(ctx *gin.Context, data interface{}, msg string , code int) {
 	ctx.JSON(http.StatusOK, gin.H{
 		"data": data,
 		"code": code,

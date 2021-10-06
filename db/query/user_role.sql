@@ -2,8 +2,8 @@
 
 -- name: CreateUserRole :one
 INSERT INTO user_role(
-    UserId,
-    RoleId
+    user_id,
+    role_id
 )
 VALUES (
     $1,
@@ -12,5 +12,5 @@ VALUES (
     RETURNING
     *;
 -- name: GetRoleByUserId :one
-SELECT RoleId FROM user_role
-WHERE UserId = $1 LIMIT 1;
+SELECT role_id FROM user_role
+WHERE user_id = $1 LIMIT 1;
