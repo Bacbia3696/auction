@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"github.com/bacbia3696/auction/internal/token"
 	"github.com/gin-gonic/gin"
-	ut "github.com/go-playground/universal-translator"
 	"net/http"
 	"strings"
 )
@@ -14,9 +13,7 @@ const (
 	authorizationTypeBearer = "bearer"
 	authorizationPayloadKey = "authorization_payload"
 )
-var (
-	trans ut.Translator
-)
+
 func AuthMiddleware() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		authorizationHeader := ctx.GetHeader(authorizationHeaderKey)
