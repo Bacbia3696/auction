@@ -18,15 +18,49 @@ func (s *Server) GetRoleId(ctx *gin.Context) int32 {
 	return roleId
 }
 
+type Request struct {
+	Keyword string `json:"keyword"`
+	Page    int32  `json:"page"`
+	Size    int32  `json:"size"`
+}
+
+type RespUsers struct {
+	Total int64 `json:"total"`
+	Users    []db.User  `json:"users"`
+}
+
 func (s *Server) ListUser(ctx *gin.Context) {
+	var req Request
+	if err := ctx.ShouldBindJSON(&req); err != nil {
+		ResponseErr(ctx, err, 1)
+		return
+	}
+	page := req.Page
+	if page == 0 {
+		page = 1
+	}
+	size := req.Size
+	if size == 0 {
+		size = 10
+	}
+	keyword := req.Keyword
+	limit := size
+	offset := limit * (page - 1)
+
 	roleId := s.GetRoleId(ctx)
 	if roleId > 2 {
 		ResponseErrMsg(ctx, nil, "User have not permission", -1)
 		return
 	}
-	users, err := s.store.GetListUser(ctx)
+	users, err := s.store.GetListUser(ctx, db.GetListUserParams{UserName: "%" + keyword + "%", Limit: limit, Offset: offset})
+	count, err := s.store.GetTotalUser(ctx,  "%" + keyword + "%")
+
+	data := RespUsers {
+		Total: count,
+		Users: users,
+	}
 	if err == nil {
-		ResponseOK(ctx, users)
+		ResponseOK(ctx, data)
 		return
 	}
 	ResponseErrMsg(ctx, nil, " Fail", -1)

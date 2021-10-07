@@ -10,114 +10,6 @@ import (
 )
 
 const createUser = `-- name: CreateUser :one
-
-INSERT INTO users (
-    user_name,
-    password,
-    full_name,
-    email,
-    address,
-    phone,
-    birthdate,
-    id_card,
-    id_card_address,
-    id_card_date,
-    bank_id,
-    bank_owner,
-    bank_name,
-    status,
-    created_at,
-    updated_at
-    )
-VALUES (
-    $1,
-    $2,
-    $3,
-    $4,
-    $5,
-    $6,
-    $7,
-    $8,
-    $9,
-    $10,
-    $11,
-    $12,
-    $13,
-    $14,
-    $15,
-    $16)
-RETURNING
-    id, user_name, password, full_name, email, address, phone, birthdate, id_card, id_card_address, id_card_date, bank_id, bank_owner, bank_name, status, organization_name, organization_id, organization_date, organization_address, position, created_at, updated_at
-`
-
-type CreateUserParams struct {
-	UserName      string       `json:"user_name"`
-	Password      string       `json:"password"`
-	FullName      string       `json:"full_name"`
-	Email         string       `json:"email"`
-	Address       string       `json:"address"`
-	Phone         string       `json:"phone"`
-	Birthdate     sql.NullTime `json:"birthdate"`
-	IDCard        string       `json:"id_card"`
-	IDCardAddress string       `json:"id_card_address"`
-	IDCardDate    time.Time    `json:"id_card_date"`
-	BankID        string       `json:"bank_id"`
-	BankOwner     string       `json:"bank_owner"`
-	BankName      string       `json:"bank_name"`
-	Status        int32        `json:"status"`
-	CreatedAt     time.Time    `json:"created_at"`
-	UpdatedAt     sql.NullTime `json:"updated_at"`
-}
-
-// query.sql
-func (q *Queries) CreateUser(ctx context.Context, arg CreateUserParams) (User, error) {
-	row := q.db.QueryRowContext(ctx, createUser,
-		arg.UserName,
-		arg.Password,
-		arg.FullName,
-		arg.Email,
-		arg.Address,
-		arg.Phone,
-		arg.Birthdate,
-		arg.IDCard,
-		arg.IDCardAddress,
-		arg.IDCardDate,
-		arg.BankID,
-		arg.BankOwner,
-		arg.BankName,
-		arg.Status,
-		arg.CreatedAt,
-		arg.UpdatedAt,
-	)
-	var i User
-	err := row.Scan(
-		&i.ID,
-		&i.UserName,
-		&i.Password,
-		&i.FullName,
-		&i.Email,
-		&i.Address,
-		&i.Phone,
-		&i.Birthdate,
-		&i.IDCard,
-		&i.IDCardAddress,
-		&i.IDCardDate,
-		&i.BankID,
-		&i.BankOwner,
-		&i.BankName,
-		&i.Status,
-		&i.OrganizationName,
-		&i.OrganizationID,
-		&i.OrganizationDate,
-		&i.OrganizationAddress,
-		&i.Position,
-		&i.CreatedAt,
-		&i.UpdatedAt,
-	)
-	return i, err
-}
-
-const createUserOrganization = `-- name: CreateUserOrganization :one
 INSERT INTO users (
     user_name,
     password,
@@ -165,7 +57,7 @@ VALUES (
     id, user_name, password, full_name, email, address, phone, birthdate, id_card, id_card_address, id_card_date, bank_id, bank_owner, bank_name, status, organization_name, organization_id, organization_date, organization_address, position, created_at, updated_at
 `
 
-type CreateUserOrganizationParams struct {
+type CreateUserParams struct {
 	UserName            string         `json:"user_name"`
 	Password            string         `json:"password"`
 	FullName            string         `json:"full_name"`
@@ -188,8 +80,9 @@ type CreateUserOrganizationParams struct {
 	UpdatedAt           sql.NullTime   `json:"updated_at"`
 }
 
-func (q *Queries) CreateUserOrganization(ctx context.Context, arg CreateUserOrganizationParams) (User, error) {
-	row := q.db.QueryRowContext(ctx, createUserOrganization,
+// query.sql
+func (q *Queries) CreateUser(ctx context.Context, arg CreateUserParams) (User, error) {
+	row := q.db.QueryRowContext(ctx, createUser,
 		arg.UserName,
 		arg.Password,
 		arg.FullName,
@@ -416,11 +309,18 @@ func (q *Queries) GetByUserNameActive(ctx context.Context, userName string) (Use
 
 const getListUser = `-- name: GetListUser :many
 SELECT id, user_name, password, full_name, email, address, phone, birthdate, id_card, id_card_address, id_card_date, bank_id, bank_owner, bank_name, status, organization_name, organization_id, organization_date, organization_address, position, created_at, updated_at FROM users
-ORDER BY id ASC
+WHERE ( user_name LIKE  $1 OR full_name LIKE  $1 OR organization_name LIKE  $1 OR id_card LIKE  $1 OR organization_id LIKE  $1 OR email  LIKE  $1)
+ORDER BY id ASC LIMIT $3 OFFSET $2
 `
 
-func (q *Queries) GetListUser(ctx context.Context) ([]User, error) {
-	rows, err := q.db.QueryContext(ctx, getListUser)
+type GetListUserParams struct {
+	UserName string `json:"user_name"`
+	Offset   int32  `json:"offset"`
+	Limit    int32  `json:"limit"`
+}
+
+func (q *Queries) GetListUser(ctx context.Context, arg GetListUserParams) ([]User, error) {
+	rows, err := q.db.QueryContext(ctx, getListUser, arg.UserName, arg.Offset, arg.Limit)
 	if err != nil {
 		return nil, err
 	}
@@ -463,6 +363,18 @@ func (q *Queries) GetListUser(ctx context.Context) ([]User, error) {
 		return nil, err
 	}
 	return items, nil
+}
+
+const getTotalUser = `-- name: GetTotalUser :one
+SELECT COUNT(*) FROM users
+WHERE ( user_name LIKE  $1 OR full_name LIKE  $1 OR organization_name LIKE  $1 OR id_card LIKE  $1 OR organization_id LIKE  $1 OR email  LIKE  $1)
+`
+
+func (q *Queries) GetTotalUser(ctx context.Context, userName string) (int64, error) {
+	row := q.db.QueryRowContext(ctx, getTotalUser, userName)
+	var count int64
+	err := row.Scan(&count)
+	return count, err
 }
 
 const updateStatus = `-- name: UpdateStatus :one
