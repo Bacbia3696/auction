@@ -1,10 +1,12 @@
 package server
 
 import (
+	"fmt"
 	"github.com/asaskevich/govalidator"
 	"github.com/sirupsen/logrus"
 	"golang.org/x/crypto/bcrypt"
 	"html"
+	"mime/multipart"
 	"net/http"
 	"strings"
 	"time"
@@ -16,24 +18,26 @@ import (
 )
 
 type createUserRequest struct {
-	RoleId        int32      `json:"roleId" binding:"required"`
-	UserName      string    `json:"userName" binding:"required"`
-	Password      string    `json:"password" binding:"required,min=6"`
-	FullName      string    `json:"fullName" binding:"required"`
-	Email         string    `json:"email" binding:"required,email"`
-	Address       string    `json:"address" binding:"required"`
-	Phone         string    `json:"phone" binding:"required"`
-	BirthDate     time.Time `json:"birthDate" `
-	IdCard        string    `json:"idCard" binding:"required"`
-	IdCardDate    time.Time `json:"idCardDate" `
-	IdCardAddress string    `json:"idCardAddress" binding:"required"`
-	BankId        string    `json:"bankId" binding:"required"`
-	BankOwner     string    `json:"bankOwner" binding:"required"`
-	BankName      string    `json:"bankName" binding:"required"`
-	OrganizationName string    `json:"organizationName"`
-	OrganizationId        string    `json:"organizationId"`
-	OrganizationDate     string    `json:"organizationDate"`
-	OrganizationAddress      string    `json:"organizationAddress"`
+	RoleId              int32     `form:"roleId" binding:"required"`
+	UserName            string    `form:"userName" binding:"required"`
+	Password            string    `form:"password" binding:"required,min=6"`
+	FullName            string    `form:"fullName" binding:"required"`
+	Email               string    `form:"email" binding:"required,email"`
+	Address             string    `form:"address" binding:"required"`
+	Phone               string    `form:"phone" binding:"required"`
+	BirthDate           time.Time `form:"birthDate" `
+	IdCard              string    `form:"idCard" binding:"required"`
+	IdCardDate          time.Time `form:"idCardDate" `
+	IdCardAddress       string    `form:"idCardAddress" binding:"required"`
+	BankId              string    `form:"bankId" binding:"required"`
+	BankOwner           string    `form:"bankOwner" binding:"required"`
+	BankName            string    `form:"bankName" binding:"required"`
+	OrganizationName    string    `form:"organizationName"`
+	OrganizationId      string    `form:"organizationId"`
+	OrganizationDate    string    `form:"organizationDate"`
+	OrganizationAddress string    `form:"organizationAddress"`
+	Images []*multipart.FileHeader `form:"images" binding:"-"`
+
 }
 type UserLogin struct {
 	UserName string `json:"userName" binding:"required"`
@@ -55,19 +59,25 @@ func Santize(data string) string {
 
 func (s *Server) RegisterUser(ctx *gin.Context) {
 	var req createUserRequest
-	if err := ctx.ShouldBindJSON(&req); err != nil {
+	if err := ctx.ShouldBind(&req); err != nil {
 		ResponseErr(ctx, err, 1)
 		return
 	}
+	//handle img
+	imgForm, _ := ctx.MultipartForm()
+	images := imgForm.File["images"]
+	req.Images = images
+	fmt.Print(req.Images[0].Filename)
+
 	//check roleId
 	if req.RoleId < 2 || req.RoleId > 4 {
 		ResponseErrMsg(ctx, nil, "RoleId invalid", -1)
 		return
 	}
 	// organization
-	if req.RoleId == 4{
-		if govalidator.IsNull(req.OrganizationName) ||  govalidator.IsNull(req.OrganizationId)||  govalidator.IsNull(req.OrganizationAddress){
-			ResponseErrMsg(ctx, nil, "Input invalid",1)
+	if req.RoleId == 4 {
+		if govalidator.IsNull(req.OrganizationName) || govalidator.IsNull(req.OrganizationId) || govalidator.IsNull(req.OrganizationAddress) {
+			ResponseErrMsg(ctx, nil, "Input invalid", 1)
 			return
 		}
 	}
@@ -109,6 +119,11 @@ func (s *Server) RegisterUser(ctx *gin.Context) {
 	params.BankID = req.BankId
 	params.BankName = req.BankName
 	params.BankOwner = req.BankOwner
+	if req.RoleId == 4 {
+		params.OrganizationID.String = req.OrganizationId
+		params.OrganizationName.String = req.OrganizationName
+		params.OrganizationAddress.String = req.OrganizationAddress
+	}
 	user, err := s.store.CreateUser(ctx, params)
 	if err != nil {
 		ResponseErr(ctx, err, 1)
@@ -135,7 +150,7 @@ func (s *Server) LoginUser(ctx *gin.Context) {
 				ResponseErrMsg(ctx, nil, "User not exists ", 1)
 				return
 			}
-			if user.Status <0 {
+			if user.Status < 0 {
 				ResponseErrMsg(ctx, nil, "User blocked ", 1)
 				return
 			}

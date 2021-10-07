@@ -3,11 +3,13 @@
 -- name: CreateUserImage :one
 INSERT INTO user_images (
     user_id,
-    url
+    url,
+    type
 )
 VALUES (
    $1,
-   $2
+   $2,
+   $3
     )
     RETURNING
     *;

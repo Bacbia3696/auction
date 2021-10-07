@@ -25,7 +25,8 @@ CREATE TABLE users (
 CREATE TABLE user_images (
     id  serial PRIMARY KEY,
     user_id  int  NOT NULL,
-    url text NOT NULL
+    url text NOT NULL,
+    type  int  NOT NULL
 );
 
 CREATE TABLE role (

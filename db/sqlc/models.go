@@ -41,6 +41,7 @@ type UserImage struct {
 	ID     int32  `json:"id"`
 	UserID int32  `json:"user_id"`
 	Url    string `json:"url"`
+	Type   int32  `json:"type"`
 }
 
 type UserRole struct {
