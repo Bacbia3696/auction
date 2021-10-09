@@ -39,6 +39,8 @@ func (server *Server) setupRouter() {
 	{
 		v1.POST("/register", server.RegisterUser)
 		v1.POST("/login", server.LoginUser)
+		v1.POST("/auctions", server.ListAuction)
+
 	}
 
 	authRoutes := router.Group("/").Use(middleware.AuthMiddleware())
@@ -46,6 +48,16 @@ func (server *Server) setupRouter() {
 		authRoutes.GET("/cms/verify", server.VerifyUser)
 		authRoutes.GET("/cms/lock", server.LockUser)
 		authRoutes.POST("/cms/list-user", server.ListUser)
+
+		authRoutes.POST("/cms/auction/create", server.CreateAuction)
+		authRoutes.GET("/cms/auction/verify", server.VerifyAuction)
+		authRoutes.GET("/cms/register-auction/verify", server.VerifyRegisterAuction)
+
+
+		authRoutes.POST("/user/change-password", server.ChangePassword)
+		authRoutes.GET("/user/register-auction", server.RegisterAuction)
+		authRoutes.POST("/user/list/register-auction", server.ListRegisterAuction)
+
 	}
 	server.router = router
 }

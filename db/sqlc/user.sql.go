@@ -369,6 +369,49 @@ func (q *Queries) GetTotalUser(ctx context.Context, userName string) (int64, err
 	return count, err
 }
 
+const updatePassword = `-- name: UpdatePassword :one
+UPDATE users
+SET password = $1
+WHERE  id = $2
+    RETURNING
+    id, user_name, password, full_name, email, address, phone, birthdate, id_card, id_card_address, id_card_date, bank_id, bank_owner, bank_name, status, organization_name, organization_id, organization_date, organization_address, position, created_at, updated_at
+`
+
+type UpdatePasswordParams struct {
+	Password string `json:"password"`
+	ID       int32  `json:"id"`
+}
+
+func (q *Queries) UpdatePassword(ctx context.Context, arg UpdatePasswordParams) (User, error) {
+	row := q.db.QueryRowContext(ctx, updatePassword, arg.Password, arg.ID)
+	var i User
+	err := row.Scan(
+		&i.ID,
+		&i.UserName,
+		&i.Password,
+		&i.FullName,
+		&i.Email,
+		&i.Address,
+		&i.Phone,
+		&i.Birthdate,
+		&i.IDCard,
+		&i.IDCardAddress,
+		&i.IDCardDate,
+		&i.BankID,
+		&i.BankOwner,
+		&i.BankName,
+		&i.Status,
+		&i.OrganizationName,
+		&i.OrganizationID,
+		&i.OrganizationDate,
+		&i.OrganizationAddress,
+		&i.Position,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+	)
+	return i, err
+}
+
 const updateStatus = `-- name: UpdateStatus :one
 UPDATE users
 SET status = $1

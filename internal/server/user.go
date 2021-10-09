@@ -150,6 +150,7 @@ func (s *Server) RegisterUser(ctx *gin.Context) {
 		ResponseErr(ctx, err, 1)
 		return
 	}
+
 	//handle img
 	forms, err := ctx.MultipartForm()
 	if err != nil {
@@ -168,8 +169,8 @@ func (s *Server) RegisterUser(ctx *gin.Context) {
 	}
 	_, err = s.store.CreateUserImage(ctx, db.CreateUserImageParams{
 		UserID: user.ID,
-		Url: fileName,
-		Type: 1,
+		Url:    fileName,
+		Type:   1,
 	})
 	if err != nil {
 		logrus.Infoln("error save user image", err)
@@ -177,7 +178,7 @@ func (s *Server) RegisterUser(ctx *gin.Context) {
 		return
 	}
 
-	ctx.JSON(http.StatusOK, user)
+	ResponseOK(ctx, user)
 }
 func (s *Server) LoginUser(ctx *gin.Context) {
 	var req UserLogin
@@ -209,6 +210,40 @@ func (s *Server) LoginUser(ctx *gin.Context) {
 		} else {
 			logrus.Error(err)
 			ResponseErrMsg(ctx, nil, "Unauthorized", 401)
+		}
+	}
+}
+
+type ChangePassword struct {
+	Password    string `json:"password" binding:"required"`
+	NewPassword string `json:"newPassword" binding:"required"`
+}
+
+func (s *Server) ChangePassword(ctx *gin.Context) {
+	var req ChangePassword
+	authPayload := ctx.MustGet(authorizationPayloadKey).(*token.Claims)
+	userId := authPayload.Id
+	if err := ctx.ShouldBindJSON(&req); err != nil {
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	} else {
+		user, err := s.store.GetById(ctx, userId)
+		if err == nil {
+			if CheckPasswordHash(req.Password, user.Password) {
+				newPassword := HashPassword(req.NewPassword)
+				_, err = s.store.UpdatePassword(ctx, db.UpdatePasswordParams{
+					Password: newPassword,
+					ID:       userId,
+				})
+				if err == nil {
+					ResponseOK(ctx, nil)
+				}
+			} else {
+				ResponseErrMsg(ctx, nil, "Password invalid", 401)
+			}
+		} else {
+			logrus.Error(err)
+			ResponseErrMsg(ctx, nil, "Password invalid ", 401)
 		}
 	}
 }

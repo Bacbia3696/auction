@@ -77,3 +77,9 @@ ORDER BY id ASC LIMIT $3 OFFSET $2;
 SELECT COUNT(*) FROM users
 WHERE ( user_name LIKE  $1 OR full_name LIKE  $1 OR organization_name LIKE  $1 OR id_card LIKE  $1 OR organization_id LIKE  $1 OR email  LIKE  $1)
 ;
+-- name: UpdatePassword :one
+UPDATE users
+SET password = $1
+WHERE  id = $2
+    RETURNING
+    *;

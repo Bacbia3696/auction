@@ -4,6 +4,7 @@ import (
 	db "github.com/bacbia3696/auction/db/sqlc"
 	"github.com/bacbia3696/auction/internal/token"
 	"github.com/gin-gonic/gin"
+	"github.com/sirupsen/logrus"
 	"strconv"
 )
 
@@ -16,6 +17,12 @@ func (s *Server) GetRoleId(ctx *gin.Context) int32 {
 	userId := authPayload.Id
 	roleId, _ := s.store.GetRoleByUserId(ctx, userId)
 	return roleId
+}
+
+func (s *Server) GetUserId(ctx *gin.Context) int32 {
+	authPayload := ctx.MustGet(authorizationPayloadKey).(*token.Claims)
+	userId := authPayload.Id
+	return userId
 }
 
 type Request struct {
@@ -63,6 +70,7 @@ func (s *Server) ListUser(ctx *gin.Context) {
 		ResponseOK(ctx, data)
 		return
 	}
+	logrus.Error(err)
 	ResponseErrMsg(ctx, nil, " Fail", -1)
 }
 
