@@ -53,7 +53,7 @@ func AuthMiddleware() gin.HandlerFunc {
 func errorResponse(err error) gin.H {
 	return gin.H{
 		"data": nil,
-		"code": err.Error(),
-		"msg":  http.StatusUnauthorized,
+		"msg": err.Error(),
+		"code":  http.StatusUnauthorized,
 	}
 }

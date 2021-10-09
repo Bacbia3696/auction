@@ -28,9 +28,7 @@ INSERT INTO users (
     organization_name,
     organization_id ,
     organization_date ,
-    organization_address,
-    created_at,
-    updated_at
+    organization_address
 )
 VALUES (
        $1,
@@ -50,9 +48,7 @@ VALUES (
        $15,
        $16,
        $17,
-       $18,
-       $19,
-       $20)
+       $18)
     RETURNING
     id, user_name, password, full_name, email, address, phone, birthdate, id_card, id_card_address, id_card_date, bank_id, bank_owner, bank_name, status, organization_name, organization_id, organization_date, organization_address, position, created_at, updated_at
 `
@@ -76,8 +72,6 @@ type CreateUserParams struct {
 	OrganizationID      sql.NullString `json:"organization_id"`
 	OrganizationDate    sql.NullTime   `json:"organization_date"`
 	OrganizationAddress sql.NullString `json:"organization_address"`
-	CreatedAt           time.Time      `json:"created_at"`
-	UpdatedAt           sql.NullTime   `json:"updated_at"`
 }
 
 // query.sql
@@ -101,8 +95,6 @@ func (q *Queries) CreateUser(ctx context.Context, arg CreateUserParams) (User, e
 		arg.OrganizationID,
 		arg.OrganizationDate,
 		arg.OrganizationAddress,
-		arg.CreatedAt,
-		arg.UpdatedAt,
 	)
 	var i User
 	err := row.Scan(

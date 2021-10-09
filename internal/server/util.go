@@ -28,7 +28,8 @@ func transInit() {
 		en := en.New()
 		uni = ut.New(en, en)
 		trans, _ = uni.GetTranslator("en")
-		_ = entranslations.RegisterDefaultTranslations(v, trans)
+		_ = entranslations.RegisterDefaultTranslations(v, trans) //nolint:errcheck
+		return
 	}
 	logrus.Info("Error trying to setup translation")
 }
@@ -59,7 +60,7 @@ func ResponseErr(ctx *gin.Context, err error, code int) {
 	ctx.JSON(http.StatusOK, req)
 }
 
-func ResponseErrMsg(ctx *gin.Context, data interface{}, msg string , code int) {
+func ResponseErrMsg(ctx *gin.Context, data interface{}, msg string, code int) {
 	ctx.JSON(http.StatusOK, gin.H{
 		"data": data,
 		"code": code,

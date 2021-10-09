@@ -15,7 +15,7 @@ type Role struct {
 type User struct {
 	ID                  int32          `json:"id"`
 	UserName            string         `json:"user_name"`
-	Password            string         `json:"-"`
+	Password            string         `json:"password"`
 	FullName            string         `json:"full_name"`
 	Email               string         `json:"email"`
 	Address             string         `json:"address"`
