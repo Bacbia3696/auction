@@ -18,26 +18,25 @@ import (
 )
 
 type createUserRequest struct {
-	RoleId              int32     `form:"roleId" binding:"required"`
-	UserName            string    `form:"userName" binding:"required"`
-	Password            string    `form:"password" binding:"required,min=6"`
-	FullName            string    `form:"fullName" binding:"required"`
-	Email               string    `form:"email" binding:"required,email"`
-	Address             string    `form:"address" binding:"required"`
-	Phone               string    `form:"phone" binding:"required"`
-	BirthDate           time.Time `form:"birthDate" `
-	IdCard              string    `form:"idCard" binding:"required"`
-	IdCardDate          time.Time `form:"idCardDate" `
-	IdCardAddress       string    `form:"idCardAddress" binding:"required"`
-	BankId              string    `form:"bankId" binding:"required"`
-	BankOwner           string    `form:"bankOwner" binding:"required"`
-	BankName            string    `form:"bankName" binding:"required"`
-	OrganizationName    string    `form:"organizationName"`
-	OrganizationId      string    `form:"organizationId"`
-	OrganizationDate    string    `form:"organizationDate"`
-	OrganizationAddress string    `form:"organizationAddress"`
-	Images []*multipart.FileHeader `form:"images" binding:"-"`
-
+	RoleId              int32                   `form:"roleId" binding:"required"`
+	UserName            string                  `form:"userName" binding:"required"`
+	Password            string                  `form:"password" binding:"required,min=6"`
+	FullName            string                  `form:"fullName" binding:"required"`
+	Email               string                  `form:"email" binding:"required,email"`
+	Address             string                  `form:"address" binding:"required"`
+	Phone               string                  `form:"phone" binding:"required"`
+	BirthDate           time.Time               `form:"birthDate" `
+	IdCard              string                  `form:"idCard" binding:"required"`
+	IdCardDate          time.Time               `form:"idCardDate" `
+	IdCardAddress       string                  `form:"idCardAddress" binding:"required"`
+	BankId              string                  `form:"bankId" binding:"required"`
+	BankOwner           string                  `form:"bankOwner" binding:"required"`
+	BankName            string                  `form:"bankName" binding:"required"`
+	OrganizationName    string                  `form:"organizationName"`
+	OrganizationId      string                  `form:"organizationId"`
+	OrganizationDate    string                  `form:"organizationDate"`
+	OrganizationAddress string                  `form:"organizationAddress"`
+	Images              []*multipart.FileHeader `form:"images" binding:"-"`
 }
 type UserLogin struct {
 	UserName string `json:"userName" binding:"required"`
@@ -136,7 +135,7 @@ func (s *Server) RegisterUser(ctx *gin.Context) {
 		ResponseErr(ctx, err, 1)
 		return
 	}
-	ctx.JSON(http.StatusOK, user)
+	ResponseOK(ctx, user)
 }
 func (s *Server) LoginUser(ctx *gin.Context) {
 	var req UserLogin
@@ -163,6 +162,40 @@ func (s *Server) LoginUser(ctx *gin.Context) {
 		} else {
 			logrus.Error(err)
 			ResponseErrMsg(ctx, nil, "Unauthorized", 401)
+		}
+	}
+}
+
+type ChangePassword struct {
+	Password    string `json:"password" binding:"required"`
+	NewPassword string `json:"newPassword" binding:"required"`
+}
+
+func (s *Server) ChangePassword(ctx *gin.Context) {
+	var req ChangePassword
+	authPayload := ctx.MustGet(authorizationPayloadKey).(*token.Claims)
+	userId := authPayload.Id
+	if err := ctx.ShouldBindJSON(&req); err != nil {
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	} else {
+		user, err := s.store.GetById(ctx, userId)
+		if err == nil {
+			if CheckPasswordHash(req.Password, user.Password) {
+				newPassword := HashPassword(req.NewPassword)
+				_, err = s.store.UpdatePassword(ctx, db.UpdatePasswordParams{
+					Password: newPassword,
+					ID:       userId,
+				})
+				if err == nil {
+					ResponseOK(ctx, nil)
+				}
+			} else {
+				ResponseErrMsg(ctx, nil, "Password invalid", 401)
+			}
+		} else {
+			logrus.Error(err)
+			ResponseErrMsg(ctx, nil, "Password invalid ", 401)
 		}
 	}
 }

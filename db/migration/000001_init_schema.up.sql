@@ -39,3 +39,38 @@ CREATE TABLE user_role (
   user_id int NOT NULL,
   role_id int NOT NULL
 );
+
+CREATE TABLE auctions (
+   id  serial PRIMARY KEY,
+   code text NOT NULL,
+   owner text NOT NULL,
+   organization text NOT NULL,
+   register_start_date date NOT NULL,
+   register_end_date date NOT NULL,
+   bid_start_date date NOT NULL,
+   bid_end_date date NOT NULL,
+   start_price int NOT NULL,
+   status int NOT NULL ,
+   updated_at timestamptz,
+   created_at  timestamptz NOT NULL DEFAULT (now())
+);
+
+CREATE TABLE auction_images (
+      id  serial PRIMARY KEY,
+      auction_id int NOT NULL,
+      url text NOT NULL
+);
+CREATE TABLE register_auction (
+    id  serial PRIMARY KEY,
+    auction_id int NOT NULL,
+    user_id int NOT NULL,
+    status int NOT NULL ,
+    updated_at timestamptz,
+    created_at  timestamptz NOT NULL DEFAULT (now())
+  );
+
+CREATE TABLE register_auction_images (
+      id  serial PRIMARY KEY,
+      register_auction_id int NOT NULL,
+      url text NOT NULL
+);

@@ -7,6 +7,42 @@ import (
 	"time"
 )
 
+type Auction struct {
+	ID                int32        `json:"id"`
+	Code              string       `json:"code"`
+	Owner             string       `json:"owner"`
+	Organization      string       `json:"organization"`
+	RegisterStartDate time.Time    `json:"register_start_date"`
+	RegisterEndDate   time.Time    `json:"register_end_date"`
+	BidStartDate      time.Time    `json:"bid_start_date"`
+	BidEndDate        time.Time    `json:"bid_end_date"`
+	StartPrice        int32        `json:"start_price"`
+	Status            int32        `json:"status"`
+	UpdatedAt         sql.NullTime `json:"updated_at"`
+	CreatedAt         time.Time    `json:"created_at"`
+}
+
+type AuctionImage struct {
+	ID        int32  `json:"id"`
+	AuctionID int32  `json:"auction_id"`
+	Url       string `json:"url"`
+}
+
+type RegisterAuction struct {
+	ID        int32        `json:"id"`
+	AuctionID int32        `json:"auction_id"`
+	UserID    int32        `json:"user_id"`
+	Status    int32        `json:"status"`
+	UpdatedAt sql.NullTime `json:"updated_at"`
+	CreatedAt time.Time    `json:"created_at"`
+}
+
+type RegisterAuctionImage struct {
+	ID                int32  `json:"id"`
+	RegisterAuctionID int32  `json:"register_auction_id"`
+	Url               string `json:"url"`
+}
+
 type Role struct {
 	ID   int32  `json:"id"`
 	Name string `json:"name"`
@@ -15,7 +51,7 @@ type Role struct {
 type User struct {
 	ID                  int32          `json:"id"`
 	UserName            string         `json:"user_name"`
-	Password            string         `json:"-"`
+	Password            string         `json:"password"`
 	FullName            string         `json:"full_name"`
 	Email               string         `json:"email"`
 	Address             string         `json:"address"`
