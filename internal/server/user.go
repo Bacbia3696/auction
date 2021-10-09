@@ -159,7 +159,7 @@ func (s *Server) RegisterUser(ctx *gin.Context) {
 	}
 	image := forms.File["images"]
 	logrus.Infoln("images", image[0].Filename)
-	fileName := fmt.Sprintf("./static/img/%d_%s", user.ID, image[0].Filename)
+	fileName := fmt.Sprintf("static/img/%d_%s", user.ID, image[0].Filename)
 	err = ctx.SaveUploadedFile(image[0], fileName)
 	if err != nil {
 		logrus.Infoln("error save image", err)
