@@ -5,6 +5,7 @@ import (
 	"github.com/bacbia3696/auction/internal/config"
 	"github.com/bacbia3696/auction/internal/constant"
 	"github.com/bacbia3696/auction/middleware"
+	"github.com/gin-contrib/cors"
 	"github.com/gin-contrib/static"
 	"github.com/gin-gonic/gin"
 )
@@ -34,6 +35,7 @@ func (s *Server) Serve() error {
 
 func (server *Server) setupRouter() {
 	router := gin.Default()
+	router.Use(cors.Default())
 	router.Use(static.Serve("/static", static.LocalFile("./static", false)))
 	v1 := router.Group("/user")
 	{
@@ -52,7 +54,6 @@ func (server *Server) setupRouter() {
 		authRoutes.POST("/cms/auction/create", server.CreateAuction)
 		authRoutes.GET("/cms/auction/verify", server.VerifyAuction)
 		authRoutes.GET("/cms/register-auction/verify", server.VerifyRegisterAuction)
-
 
 		authRoutes.POST("/user/change-password", server.ChangePassword)
 		authRoutes.GET("/user/register-auction", server.RegisterAuction)
