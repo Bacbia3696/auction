@@ -18,9 +18,7 @@ INSERT INTO users (
     organization_name,
     organization_id ,
     organization_date ,
-    organization_address,
-    created_at,
-    updated_at
+    organization_address
 )
 VALUES (
        $1,
@@ -40,9 +38,7 @@ VALUES (
        $15,
        $16,
        $17,
-       $18,
-       $19,
-       $20)
+       $18)
     RETURNING
     *;
 

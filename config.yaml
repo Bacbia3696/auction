@@ -1,5 +1,5 @@
 server:
-  host: 127.0.0.1
+  host: 0.0.0.0
   port: 9000
 db_source: postgresql://postgres:password@localhost:5432/auction?sslmode=disable
 environment: development

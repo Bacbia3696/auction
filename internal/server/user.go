@@ -1,20 +1,21 @@
 package server
 
 import (
+	"database/sql"
 	"fmt"
-	"github.com/asaskevich/govalidator"
-	"github.com/sirupsen/logrus"
-	"golang.org/x/crypto/bcrypt"
 	"html"
 	"mime/multipart"
 	"net/http"
 	"strings"
 	"time"
 
+	"github.com/asaskevich/govalidator"
+	"github.com/sirupsen/logrus"
+	"golang.org/x/crypto/bcrypt"
+
 	db "github.com/bacbia3696/auction/db/sqlc"
 	"github.com/bacbia3696/auction/internal/token"
 	"github.com/gin-gonic/gin"
-	"github.com/jinzhu/copier"
 )
 
 type createUserRequest struct {
@@ -36,7 +37,7 @@ type createUserRequest struct {
 	OrganizationId      string                  `form:"organizationId"`
 	OrganizationDate    string                  `form:"organizationDate"`
 	OrganizationAddress string                  `form:"organizationAddress"`
-	Images              []*multipart.FileHeader `form:"images" binding:"-"`
+	Images              []*multipart.FileHeader `form:"images" binding:"required"`
 }
 type UserLogin struct {
 	UserName string `json:"userName" binding:"required"`
@@ -44,7 +45,10 @@ type UserLogin struct {
 }
 
 func HashPassword(password string) string {
-	bytes, _ := bcrypt.GenerateFromPassword([]byte(password), 14)
+	bytes, err := bcrypt.GenerateFromPassword([]byte(password), 14)
+	if err != nil {
+		logrus.Infoln("error hash password", err)
+	}
 	return string(bytes)
 }
 func CheckPasswordHash(password, hash string) bool {
@@ -62,12 +66,6 @@ func (s *Server) RegisterUser(ctx *gin.Context) {
 		ResponseErr(ctx, err, 1)
 		return
 	}
-	//handle img
-	imgForm, _ := ctx.MultipartForm()
-	images := imgForm.File["images"]
-	req.Images = images
-	fmt.Print(req.Images[0].Filename)
-
 	//check roleId
 	if req.RoleId < 2 || req.RoleId > 4 {
 		ResponseErrMsg(ctx, nil, "RoleId invalid", -1)
@@ -106,10 +104,13 @@ func (s *Server) RegisterUser(ctx *gin.Context) {
 		}
 	}
 	// create new user
-	req.IdCardDate = time.Now()
-	req.BirthDate = time.Now()
-	params := db.CreateUserParams{}
-	copier.Copy(&params, req)
+	// req.IdCardDate = time.Now()
+	// req.BirthDate = time.Now()
+	params := db.CreateUserParams{
+		Email:   req.Email,
+		Address: req.Address,
+		Phone:   req.Phone,
+	}
 	params.Password = HashPassword(req.Password)
 	params.UserName = req.UserName
 	params.FullName = req.FullName
@@ -119,13 +120,27 @@ func (s *Server) RegisterUser(ctx *gin.Context) {
 	params.BankName = req.BankName
 	params.BankOwner = req.BankOwner
 	if req.RoleId == 4 {
-		params.OrganizationID.String = req.OrganizationId
-		params.OrganizationName.String = req.OrganizationName
-		params.OrganizationAddress.String = req.OrganizationAddress
+		params.OrganizationID = sql.NullString{
+			String: req.OrganizationId,
+			Valid:  true,
+		}
+		params.OrganizationName = sql.NullString{
+			String: req.OrganizationName,
+			Valid:  true,
+		}
+		params.OrganizationAddress = sql.NullString{
+			String: req.OrganizationAddress,
+			Valid:  true,
+		}
+	}
+	params.Birthdate = sql.NullTime{
+		Time:  req.BirthDate,
+		Valid: true,
 	}
 	user, err := s.store.CreateUser(ctx, params)
 	if err != nil {
-		ResponseErr(ctx, err, 1)
+		logrus.Infoln("error create user", err)
+		ResponseErr(ctx, err, http.StatusInternalServerError)
 		return
 	}
 	//add user role
@@ -135,6 +150,34 @@ func (s *Server) RegisterUser(ctx *gin.Context) {
 		ResponseErr(ctx, err, 1)
 		return
 	}
+
+	//handle img
+	forms, err := ctx.MultipartForm()
+	if err != nil {
+		logrus.Infoln("error parse MultipartForm", err)
+		ResponseErr(ctx, err, http.StatusInternalServerError)
+		return
+	}
+	image := forms.File["images"]
+	logrus.Infoln("images", image[0].Filename)
+	fileName := fmt.Sprintf("static/img/%d_%s", user.ID, image[0].Filename)
+	err = ctx.SaveUploadedFile(image[0], fileName)
+	if err != nil {
+		logrus.Infoln("error save image", err)
+		ResponseErr(ctx, err, http.StatusInternalServerError)
+		return
+	}
+	_, err = s.store.CreateUserImage(ctx, db.CreateUserImageParams{
+		UserID: user.ID,
+		Url:    fileName,
+		Type:   1,
+	})
+	if err != nil {
+		logrus.Infoln("error save user image", err)
+		ResponseErr(ctx, err, http.StatusInternalServerError)
+		return
+	}
+
 	ResponseOK(ctx, user)
 }
 func (s *Server) LoginUser(ctx *gin.Context) {
@@ -154,7 +197,12 @@ func (s *Server) LoginUser(ctx *gin.Context) {
 				return
 			}
 			if CheckPasswordHash(req.Password, user.Password) {
-				token, _ := token.GenToken(user)
+				token, err := token.GenToken(user)
+				if err != nil {
+					logrus.Infoln("error GenToken", err)
+					ResponseErr(ctx, err, http.StatusInternalServerError)
+					return
+				}
 				ResponseOK(ctx, token)
 			} else {
 				ResponseErrMsg(ctx, nil, "Unauthorized", 401)

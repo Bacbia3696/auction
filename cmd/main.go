@@ -44,5 +44,10 @@ func loadDB(cfg *config.Config) *sql.DB {
 	if err != nil {
 		panic(err)
 	}
+	// check connection
+	_, err = conn.Exec("SELECT 1")
+	if err != nil {
+		panic(err)
+	}
 	return conn
 }
