@@ -2,8 +2,6 @@ package server
 
 import (
 	"fmt"
-	"net/http"
-
 	"github.com/gin-gonic/gin"
 	"github.com/gin-gonic/gin/binding"
 	"github.com/go-playground/locales/en"
@@ -11,6 +9,10 @@ import (
 	"github.com/go-playground/validator/v10"
 	entranslations "github.com/go-playground/validator/v10/translations/en"
 	"github.com/sirupsen/logrus"
+	"math/rand"
+	"net/http"
+	"strings"
+	"text/template"
 )
 
 // use a single instance , it caches struct info
@@ -66,4 +68,18 @@ func ResponseErrMsg(ctx *gin.Context, data interface{}, msg string, code int) {
 		"code": code,
 		"msg":  msg,
 	})
+}
+var letterRunes = []rune("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ")
+
+func RandStringRunes(n int) string {
+	b := make([]rune, n)
+	for i := range b {
+		b[i] = letterRunes[rand.Intn(len(letterRunes))]
+	}
+	return string(b)
+}
+func Format(s string, v interface{}) string {
+	t, b := new(template.Template), new(strings.Builder)
+	template.Must(t.Parse(s)).Execute(b, v)
+	return b.String()
 }

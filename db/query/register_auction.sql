@@ -32,7 +32,7 @@ SELECT au.*, ra.status as verify FROM register_auction as ra INNER JOIN auctions
 WHERE ra.user_id = $1 ORDER BY id ASC LIMIT $3 OFFSET $2;;
 
 -- name: GetRegisterAuctionByUserId :one
-SELECT au.* FROM register_auction as ra INNER JOIN auctions as au ON ra.auction_id = au.id
+SELECT au.*, ra.status as verify FROM register_auction as ra INNER JOIN auctions as au ON ra.auction_id = au.id
 WHERE ra.user_id = $1 AND ra.auction_id = $2;
 
 -- name: GetListRegisterAuction :many

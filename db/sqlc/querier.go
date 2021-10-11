@@ -9,6 +9,7 @@ import (
 type Querier interface {
 	CreateAuction(ctx context.Context, arg CreateAuctionParams) (Auction, error)
 	CreateAuctionImage(ctx context.Context, arg CreateAuctionImageParams) (AuctionImage, error)
+	CreateBid(ctx context.Context, arg CreateBidParams) (Bid, error)
 	CreateRegisterAuction(ctx context.Context, arg CreateRegisterAuctionParams) (RegisterAuction, error)
 	CreateRegisterAuctionImage(ctx context.Context, arg CreateRegisterAuctionImageParams) (RegisterAuctionImage, error)
 	CreateUser(ctx context.Context, arg CreateUserParams) (User, error)
@@ -25,8 +26,9 @@ type Querier interface {
 	GetListRegisterAuction(ctx context.Context, arg GetListRegisterAuctionParams) ([]User, error)
 	GetListRegisterAuctionByUserId(ctx context.Context, arg GetListRegisterAuctionByUserIdParams) ([]GetListRegisterAuctionByUserIdRow, error)
 	GetListUser(ctx context.Context, arg GetListUserParams) ([]User, error)
+	GetMaxBid(ctx context.Context, auctionID int32) (interface{}, error)
 	GetRegisterAuctionById(ctx context.Context, id int32) (RegisterAuction, error)
-	GetRegisterAuctionByUserId(ctx context.Context, arg GetRegisterAuctionByUserIdParams) (Auction, error)
+	GetRegisterAuctionByUserId(ctx context.Context, arg GetRegisterAuctionByUserIdParams) (GetRegisterAuctionByUserIdRow, error)
 	GetRoleByUserId(ctx context.Context, userID int32) (int32, error)
 	GetTotalAuction(ctx context.Context, code string) (int64, error)
 	GetTotalRegisterAuction(ctx context.Context, auctionID int32) (int64, error)

@@ -67,6 +67,7 @@ CREATE TABLE auctions (
     bid_end_date date NOT NULL,
     start_price int NOT NULL,
     status int NOT NULL,
+    type int NOT NULL,
     updated_at timestamptz,
     created_at timestamptz NOT NULL DEFAULT (now())
 );
@@ -91,3 +92,14 @@ CREATE TABLE register_auction_images (
     register_auction_id int NOT NULL,
     url text NOT NULL
 );
+
+CREATE TABLE bid (
+      id serial PRIMARY KEY,
+      auction_id int NOT NULL,
+      user_id int NOT NULL,
+      price int NOT NULL,
+      status int NOT NULL,
+      updated_at timestamptz NOT NULL DEFAULT (now()),
+      created_at timestamptz NOT NULL DEFAULT (now())
+);
+

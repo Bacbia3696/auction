@@ -116,7 +116,7 @@ func (q *Queries) GetListRegisterAuction(ctx context.Context, arg GetListRegiste
 }
 
 const getListRegisterAuctionByUserId = `-- name: GetListRegisterAuctionByUserId :many
-SELECT au.id, au.code, au.owner, au.organization, au.register_start_date, au.register_end_date, au.bid_start_date, au.bid_end_date, au.start_price, au.status, au.updated_at, au.created_at, ra.status as verify FROM register_auction as ra INNER JOIN auctions as au ON ra.auction_id = au.id
+SELECT au.id, au.code, au.owner, au.organization, au.register_start_date, au.register_end_date, au.bid_start_date, au.bid_end_date, au.start_price, au.status, au.type, au.updated_at, au.created_at, ra.status as verify FROM register_auction as ra INNER JOIN auctions as au ON ra.auction_id = au.id
 WHERE ra.user_id = $1 ORDER BY id ASC LIMIT $3 OFFSET $2
 `
 
@@ -137,6 +137,7 @@ type GetListRegisterAuctionByUserIdRow struct {
 	BidEndDate        time.Time    `json:"bid_end_date"`
 	StartPrice        int32        `json:"start_price"`
 	Status            int32        `json:"status"`
+	Type              int32        `json:"type"`
 	UpdatedAt         sql.NullTime `json:"updated_at"`
 	CreatedAt         time.Time    `json:"created_at"`
 	Verify            int32        `json:"verify"`
@@ -162,6 +163,7 @@ func (q *Queries) GetListRegisterAuctionByUserId(ctx context.Context, arg GetLis
 			&i.BidEndDate,
 			&i.StartPrice,
 			&i.Status,
+			&i.Type,
 			&i.UpdatedAt,
 			&i.CreatedAt,
 			&i.Verify,
@@ -199,7 +201,7 @@ func (q *Queries) GetRegisterAuctionById(ctx context.Context, id int32) (Registe
 }
 
 const getRegisterAuctionByUserId = `-- name: GetRegisterAuctionByUserId :one
-SELECT au.id, au.code, au.owner, au.organization, au.register_start_date, au.register_end_date, au.bid_start_date, au.bid_end_date, au.start_price, au.status, au.updated_at, au.created_at FROM register_auction as ra INNER JOIN auctions as au ON ra.auction_id = au.id
+SELECT au.id, au.code, au.owner, au.organization, au.register_start_date, au.register_end_date, au.bid_start_date, au.bid_end_date, au.start_price, au.status, au.type, au.updated_at, au.created_at, ra.status as verify FROM register_auction as ra INNER JOIN auctions as au ON ra.auction_id = au.id
 WHERE ra.user_id = $1 AND ra.auction_id = $2
 `
 
@@ -208,9 +210,26 @@ type GetRegisterAuctionByUserIdParams struct {
 	AuctionID int32 `json:"auction_id"`
 }
 
-func (q *Queries) GetRegisterAuctionByUserId(ctx context.Context, arg GetRegisterAuctionByUserIdParams) (Auction, error) {
+type GetRegisterAuctionByUserIdRow struct {
+	ID                int32        `json:"id"`
+	Code              string       `json:"code"`
+	Owner             string       `json:"owner"`
+	Organization      string       `json:"organization"`
+	RegisterStartDate time.Time    `json:"register_start_date"`
+	RegisterEndDate   time.Time    `json:"register_end_date"`
+	BidStartDate      time.Time    `json:"bid_start_date"`
+	BidEndDate        time.Time    `json:"bid_end_date"`
+	StartPrice        int32        `json:"start_price"`
+	Status            int32        `json:"status"`
+	Type              int32        `json:"type"`
+	UpdatedAt         sql.NullTime `json:"updated_at"`
+	CreatedAt         time.Time    `json:"created_at"`
+	Verify            int32        `json:"verify"`
+}
+
+func (q *Queries) GetRegisterAuctionByUserId(ctx context.Context, arg GetRegisterAuctionByUserIdParams) (GetRegisterAuctionByUserIdRow, error) {
 	row := q.db.QueryRowContext(ctx, getRegisterAuctionByUserId, arg.UserID, arg.AuctionID)
-	var i Auction
+	var i GetRegisterAuctionByUserIdRow
 	err := row.Scan(
 		&i.ID,
 		&i.Code,
@@ -222,8 +241,10 @@ func (q *Queries) GetRegisterAuctionByUserId(ctx context.Context, arg GetRegiste
 		&i.BidEndDate,
 		&i.StartPrice,
 		&i.Status,
+		&i.Type,
 		&i.UpdatedAt,
 		&i.CreatedAt,
+		&i.Verify,
 	)
 	return i, err
 }

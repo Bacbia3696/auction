@@ -20,6 +20,7 @@ INSERT INTO auctions (
     bid_end_date,
     start_price,
     status,
+    type ,
     updated_at,
     created_at
 )
@@ -34,10 +35,11 @@ VALUES (
        $8,
        $9,
        $10,
-       $11
+       $11,
+       $12
          )
     RETURNING
-    id, code, owner, organization, register_start_date, register_end_date, bid_start_date, bid_end_date, start_price, status, updated_at, created_at
+    id, code, owner, organization, register_start_date, register_end_date, bid_start_date, bid_end_date, start_price, status, type, updated_at, created_at
 `
 
 type CreateAuctionParams struct {
@@ -50,6 +52,7 @@ type CreateAuctionParams struct {
 	BidEndDate        time.Time    `json:"bid_end_date"`
 	StartPrice        int32        `json:"start_price"`
 	Status            int32        `json:"status"`
+	Type              int32        `json:"type"`
 	UpdatedAt         sql.NullTime `json:"updated_at"`
 	CreatedAt         time.Time    `json:"created_at"`
 }
@@ -66,6 +69,7 @@ func (q *Queries) CreateAuction(ctx context.Context, arg CreateAuctionParams) (A
 		arg.BidEndDate,
 		arg.StartPrice,
 		arg.Status,
+		arg.Type,
 		arg.UpdatedAt,
 		arg.CreatedAt,
 	)
@@ -81,6 +85,7 @@ func (q *Queries) CreateAuction(ctx context.Context, arg CreateAuctionParams) (A
 		&i.BidEndDate,
 		&i.StartPrice,
 		&i.Status,
+		&i.Type,
 		&i.UpdatedAt,
 		&i.CreatedAt,
 	)
@@ -88,7 +93,7 @@ func (q *Queries) CreateAuction(ctx context.Context, arg CreateAuctionParams) (A
 }
 
 const getAuctionById = `-- name: GetAuctionById :one
-SELECT id, code, owner, organization, register_start_date, register_end_date, bid_start_date, bid_end_date, start_price, status, updated_at, created_at FROM auctions
+SELECT id, code, owner, organization, register_start_date, register_end_date, bid_start_date, bid_end_date, start_price, status, type, updated_at, created_at FROM auctions
 WHERE id = $1 LIMIT 1
 `
 
@@ -106,6 +111,7 @@ func (q *Queries) GetAuctionById(ctx context.Context, id int32) (Auction, error)
 		&i.BidEndDate,
 		&i.StartPrice,
 		&i.Status,
+		&i.Type,
 		&i.UpdatedAt,
 		&i.CreatedAt,
 	)
@@ -113,7 +119,7 @@ func (q *Queries) GetAuctionById(ctx context.Context, id int32) (Auction, error)
 }
 
 const getByCode = `-- name: GetByCode :one
-SELECT id, code, owner, organization, register_start_date, register_end_date, bid_start_date, bid_end_date, start_price, status, updated_at, created_at FROM auctions
+SELECT id, code, owner, organization, register_start_date, register_end_date, bid_start_date, bid_end_date, start_price, status, type, updated_at, created_at FROM auctions
 WHERE code = $1 LIMIT 1
 `
 
@@ -131,6 +137,7 @@ func (q *Queries) GetByCode(ctx context.Context, code string) (Auction, error) {
 		&i.BidEndDate,
 		&i.StartPrice,
 		&i.Status,
+		&i.Type,
 		&i.UpdatedAt,
 		&i.CreatedAt,
 	)
@@ -138,7 +145,7 @@ func (q *Queries) GetByCode(ctx context.Context, code string) (Auction, error) {
 }
 
 const getListAuction = `-- name: GetListAuction :many
-SELECT id, code, owner, organization, register_start_date, register_end_date, bid_start_date, bid_end_date, start_price, status, updated_at, created_at FROM auctions
+SELECT id, code, owner, organization, register_start_date, register_end_date, bid_start_date, bid_end_date, start_price, status, type, updated_at, created_at FROM auctions
 WHERE ( code LIKE  $1 OR owner LIKE  $1 OR organization LIKE  $1 )
 ORDER BY id ASC LIMIT $3 OFFSET $2
 `
@@ -169,6 +176,7 @@ func (q *Queries) GetListAuction(ctx context.Context, arg GetListAuctionParams) 
 			&i.BidEndDate,
 			&i.StartPrice,
 			&i.Status,
+			&i.Type,
 			&i.UpdatedAt,
 			&i.CreatedAt,
 		); err != nil {
@@ -202,7 +210,7 @@ UPDATE auctions
 SET status = $1
 WHERE  id = $2
     RETURNING
-    id, code, owner, organization, register_start_date, register_end_date, bid_start_date, bid_end_date, start_price, status, updated_at, created_at
+    id, code, owner, organization, register_start_date, register_end_date, bid_start_date, bid_end_date, start_price, status, type, updated_at, created_at
 `
 
 type UpdateStatusAuctionParams struct {
@@ -224,6 +232,7 @@ func (q *Queries) UpdateStatusAuction(ctx context.Context, arg UpdateStatusAucti
 		&i.BidEndDate,
 		&i.StartPrice,
 		&i.Status,
+		&i.Type,
 		&i.UpdatedAt,
 		&i.CreatedAt,
 	)

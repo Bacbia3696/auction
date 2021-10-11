@@ -7,7 +7,9 @@ import (
 	"github.com/jinzhu/copier"
 	"github.com/sirupsen/logrus"
 	"mime/multipart"
+	"net/http"
 	"strconv"
+	"strings"
 	"time"
 )
 
@@ -15,11 +17,12 @@ type CreateAuctionRequest struct {
 	Code              string                  `form:"code" binding:"required"`
 	Owner             string                  `form:"owner" binding:"required,min=6"`
 	Organization      string                  `form:"organization" binding:"required"`
-	RegisterStartDate time.Time               `form:"registerStartDate"`
-	RegisterEndDate   time.Time               `form:"registerEndDate" `
-	BidStartDate      time.Time               `form:"bidStartDate"`
-	BidEndDate        time.Time               `form:"bidEndDate" `
+	RegisterStartDate time.Time               `form:"registerStartDate" binding:"required"`
+	RegisterEndDate   time.Time               `form:"registerEndDate" binding:"required" `
+	BidStartDate      time.Time               `form:"bidStartDate" binding:"required"`
+	BidEndDate        time.Time               `form:"bidEndDate" binding:"required"`
 	StartPrice        int64                   `form:"startPrice" binding:"required"`
+	Type              int32                     `form:"type" binding:"required"`
 	Images            []*multipart.FileHeader `form:"images" binding:"-"`
 }
 type RespAuctions struct {
@@ -47,34 +50,52 @@ func (s *Server) CreateAuction(ctx *gin.Context) {
 			return
 		}
 	}
-	//handle img
-	imgForm, _ := ctx.MultipartForm()
-	images := imgForm.File["images"]
-	req.Images = images
-	fmt.Print(req.Images[0].Filename)
-
-	req.BidEndDate = time.Now()
-	req.BidStartDate = time.Now()
-	req.RegisterStartDate = time.Now()
-	req.RegisterEndDate = time.Now()
+	//check date
+	if req.BidStartDate.After(req.BidEndDate) || req.RegisterStartDate.After(req.RegisterEndDate) || req.RegisterStartDate.After(req.BidStartDate) || req.RegisterEndDate.After(req.BidEndDate) || req.RegisterEndDate.After(req.BidStartDate){
+		ResponseErrMsg(ctx, nil, "Date invalid", 403)
+		return
+	}
 
 	params := db.CreateAuctionParams{}
 	copier.Copy(&params, req)
 	params.Status = 0
 	params.Organization = req.Organization
+	params.Type = req.Type
 
 	auction, err := s.store.CreateAuction(ctx, params)
 	if err != nil {
 		ResponseErr(ctx, err, 1)
 		return
 	}
-	//add img
 	auctionId := auction.ID
+	//handle img
+	imgForm, _ := ctx.MultipartForm()
+	images := imgForm.File["images"]
+	req.Images = images
 	for i := 0; i < len(images); i++ {
-		auctionImgParam := db.CreateAuctionImageParams{}
-		auctionImgParam.AuctionID = auctionId
-		auctionImgParam.Url = images[i].Filename // update url
-		s.store.CreateAuctionImage(ctx, auctionImgParam)
+		logrus.Infoln("images", images[i].Filename)
+		fileNames := strings.Split(images[i].Filename, ".")
+		if len(fileNames) < 2 {
+			logrus.Infoln("file invalid")
+			ResponseErrMsg(ctx, nil, "Images input invalid ", 403)
+			return
+		}
+		fileName := fmt.Sprintf("static/img/%d_%s", auctionId, RandStringRunes(8)+"."+fileNames[1])
+		err = ctx.SaveUploadedFile(images[i], fileName)
+		if err != nil {
+			logrus.Infoln("error save image auction", err)
+			ResponseErr(ctx, err, http.StatusInternalServerError)
+			return
+		}
+		_, err = s.store.CreateAuctionImage(ctx, db.CreateAuctionImageParams{
+			AuctionID: auctionId,
+			Url:       fileName,
+		})
+		if err != nil {
+			logrus.Infoln("error save auction image", err)
+			ResponseErr(ctx, err, http.StatusInternalServerError)
+			return
+		}
 	}
 	ResponseOK(ctx, auction)
 }
@@ -146,7 +167,7 @@ func (s *Server) RegisterAuction(ctx *gin.Context) {
 				UserID:    userId,
 				AuctionID: int32(auctionId),
 			})
-			if (db.Auction{}) != check {
+			if (db.GetRegisterAuctionByUserIdRow{}) != check {
 				ResponseErrMsg(ctx, nil, "User registered", -1)
 				return
 			}
@@ -160,7 +181,8 @@ func (s *Server) RegisterAuction(ctx *gin.Context) {
 				return
 			}
 		} else {
-			ResponseErrMsg(ctx, nil, "Auction not fond", -1)
+			logrus.Error(err)
+			ResponseErrMsg(ctx, nil, "Auction not found", -1)
 			return
 		}
 	} else {

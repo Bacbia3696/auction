@@ -10,6 +10,7 @@ INSERT INTO auctions (
     bid_end_date,
     start_price,
     status,
+    type ,
     updated_at,
     created_at
 )
@@ -24,7 +25,8 @@ VALUES (
        $8,
        $9,
        $10,
-       $11
+       $11,
+       $12
          )
     RETURNING
     *;

@@ -58,6 +58,7 @@ func (server *Server) setupRouter() {
 		authRoutes.POST("/user/change-password", server.ChangePassword)
 		authRoutes.GET("/user/register-auction", server.RegisterAuction)
 		authRoutes.POST("/user/list/register-auction", server.ListRegisterAuction)
+		authRoutes.POST("/user/auction/bid", server.DoBid)
 
 	}
 	server.router = router

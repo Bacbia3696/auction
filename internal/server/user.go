@@ -26,9 +26,9 @@ type createUserRequest struct {
 	Email               string                  `form:"email" binding:"required,email"`
 	Address             string                  `form:"address" binding:"required"`
 	Phone               string                  `form:"phone" binding:"required"`
-	BirthDate           time.Time               `form:"birthDate" `
+	BirthDate           time.Time               `form:"birthDate" binding:"required"`
 	IdCard              string                  `form:"idCard" binding:"required"`
-	IdCardDate          time.Time               `form:"idCardDate" `
+	IdCardDate          time.Time               `form:"idCardDate" binding:"required"`
 	IdCardAddress       string                  `form:"idCardAddress" binding:"required"`
 	BankId              string                  `form:"bankId" binding:"required"`
 	BankOwner           string                  `form:"bankOwner" binding:"required"`
@@ -158,28 +158,37 @@ func (s *Server) RegisterUser(ctx *gin.Context) {
 		ResponseErr(ctx, err, http.StatusInternalServerError)
 		return
 	}
-	image := forms.File["images"]
-	logrus.Infoln("images", image[0].Filename)
-	fileName := fmt.Sprintf("static/img/%d_%s", user.ID, image[0].Filename)
-	err = ctx.SaveUploadedFile(image[0], fileName)
-	if err != nil {
-		logrus.Infoln("error save image", err)
-		ResponseErr(ctx, err, http.StatusInternalServerError)
-		return
-	}
-	_, err = s.store.CreateUserImage(ctx, db.CreateUserImageParams{
-		UserID: user.ID,
-		Url:    fileName,
-		Type:   1,
-	})
-	if err != nil {
-		logrus.Infoln("error save user image", err)
-		ResponseErr(ctx, err, http.StatusInternalServerError)
-		return
-	}
+	images := forms.File["images"]
 
+	for i := 0; i < len(images); i++ {
+		logrus.Infoln("images", images[i].Filename)
+		fileNames := strings.Split(images[i].Filename, ".")
+		if len(fileNames) < 2 {
+			logrus.Infoln("file invalid")
+			ResponseErrMsg(ctx, nil, "Images input invalid ", 403)
+			return
+		}
+		fileName := fmt.Sprintf("static/img/%d_%s", user.ID, RandStringRunes(8)+"."+fileNames[1])
+		err = ctx.SaveUploadedFile(images[i], fileName)
+		if err != nil {
+			logrus.Infoln("error save image", err)
+			ResponseErr(ctx, err, http.StatusInternalServerError)
+			return
+		}
+		_, err = s.store.CreateUserImage(ctx, db.CreateUserImageParams{
+			UserID: user.ID,
+			Url:    fileName,
+			Type:   1,
+		})
+		if err != nil {
+			logrus.Infoln("error save user image", err)
+			ResponseErr(ctx, err, http.StatusInternalServerError)
+			return
+		}
+	}
 	ResponseOK(ctx, user)
 }
+
 func (s *Server) LoginUser(ctx *gin.Context) {
 	var req UserLogin
 	if err := ctx.ShouldBindJSON(&req); err != nil {
