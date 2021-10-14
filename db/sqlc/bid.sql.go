@@ -5,7 +5,6 @@ package db
 
 import (
 	"context"
-	"database/sql"
 	"time"
 )
 
@@ -31,12 +30,12 @@ VALUES (
 `
 
 type CreateBidParams struct {
-	AuctionID int32        `json:"auction_id"`
-	UserID    int32        `json:"user_id"`
-	Price     int32        `json:"price"`
-	Status    int32        `json:"status"`
-	UpdatedAt sql.NullTime `json:"updated_at"`
-	CreatedAt time.Time    `json:"created_at"`
+	AuctionID int32     `json:"auction_id"`
+	UserID    int32     `json:"user_id"`
+	Price     int32     `json:"price"`
+	Status    int32     `json:"status"`
+	UpdatedAt time.Time `json:"updated_at"`
+	CreatedAt time.Time `json:"created_at"`
 }
 
 // query.sql
