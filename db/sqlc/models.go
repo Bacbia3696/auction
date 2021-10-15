@@ -9,14 +9,19 @@ import (
 
 type Auction struct {
 	ID                int32        `json:"id"`
+	Title             string       `json:"title"`
+	Description       string       `json:"description"`
 	Code              string       `json:"code"`
 	Owner             string       `json:"owner"`
 	Organization      string       `json:"organization"`
+	Info              string       `json:"info"`
+	Address           string       `json:"address"`
 	RegisterStartDate time.Time    `json:"register_start_date"`
 	RegisterEndDate   time.Time    `json:"register_end_date"`
 	BidStartDate      time.Time    `json:"bid_start_date"`
 	BidEndDate        time.Time    `json:"bid_end_date"`
 	StartPrice        int32        `json:"start_price"`
+	StepPrice         int32        `json:"step_price"`
 	Status            int32        `json:"status"`
 	Type              int32        `json:"type"`
 	UpdatedAt         sql.NullTime `json:"updated_at"`
@@ -30,13 +35,13 @@ type AuctionImage struct {
 }
 
 type Bid struct {
-	ID        int32        `json:"id"`
-	AuctionID int32        `json:"auction_id"`
-	UserID    int32        `json:"user_id"`
-	Price     int32        `json:"price"`
-	Status    int32        `json:"status"`
-	UpdatedAt sql.NullTime `json:"updated_at"`
-	CreatedAt time.Time    `json:"created_at"`
+	ID        int32     `json:"id"`
+	AuctionID int32     `json:"auction_id"`
+	UserID    int32     `json:"user_id"`
+	Price     int32     `json:"price"`
+	Status    int32     `json:"status"`
+	UpdatedAt time.Time `json:"updated_at"`
+	CreatedAt time.Time `json:"created_at"`
 }
 
 type RegisterAuction struct {

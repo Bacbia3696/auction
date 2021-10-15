@@ -11,14 +11,19 @@ import (
 
 const createAuction = `-- name: CreateAuction :one
 INSERT INTO auctions (
+    title,
+    description,
     code,
     owner,
     organization,
+    info,
+    address,
     register_start_date,
     register_end_date,
     bid_start_date,
     bid_end_date,
     start_price,
+    step_price,
     status,
     type ,
     updated_at,
@@ -36,21 +41,31 @@ VALUES (
        $9,
        $10,
        $11,
-       $12
+       $12,
+       $13,
+       $14,
+       $15,
+       $16,
+       $17
          )
     RETURNING
-    id, code, owner, organization, register_start_date, register_end_date, bid_start_date, bid_end_date, start_price, status, type, updated_at, created_at
+    id, title, description, code, owner, organization, info, address, register_start_date, register_end_date, bid_start_date, bid_end_date, start_price, step_price, status, type, updated_at, created_at
 `
 
 type CreateAuctionParams struct {
+	Title             string       `json:"title"`
+	Description       string       `json:"description"`
 	Code              string       `json:"code"`
 	Owner             string       `json:"owner"`
 	Organization      string       `json:"organization"`
+	Info              string       `json:"info"`
+	Address           string       `json:"address"`
 	RegisterStartDate time.Time    `json:"register_start_date"`
 	RegisterEndDate   time.Time    `json:"register_end_date"`
 	BidStartDate      time.Time    `json:"bid_start_date"`
 	BidEndDate        time.Time    `json:"bid_end_date"`
 	StartPrice        int32        `json:"start_price"`
+	StepPrice         int32        `json:"step_price"`
 	Status            int32        `json:"status"`
 	Type              int32        `json:"type"`
 	UpdatedAt         sql.NullTime `json:"updated_at"`
@@ -60,14 +75,19 @@ type CreateAuctionParams struct {
 // query.sql
 func (q *Queries) CreateAuction(ctx context.Context, arg CreateAuctionParams) (Auction, error) {
 	row := q.db.QueryRowContext(ctx, createAuction,
+		arg.Title,
+		arg.Description,
 		arg.Code,
 		arg.Owner,
 		arg.Organization,
+		arg.Info,
+		arg.Address,
 		arg.RegisterStartDate,
 		arg.RegisterEndDate,
 		arg.BidStartDate,
 		arg.BidEndDate,
 		arg.StartPrice,
+		arg.StepPrice,
 		arg.Status,
 		arg.Type,
 		arg.UpdatedAt,
@@ -76,14 +96,19 @@ func (q *Queries) CreateAuction(ctx context.Context, arg CreateAuctionParams) (A
 	var i Auction
 	err := row.Scan(
 		&i.ID,
+		&i.Title,
+		&i.Description,
 		&i.Code,
 		&i.Owner,
 		&i.Organization,
+		&i.Info,
+		&i.Address,
 		&i.RegisterStartDate,
 		&i.RegisterEndDate,
 		&i.BidStartDate,
 		&i.BidEndDate,
 		&i.StartPrice,
+		&i.StepPrice,
 		&i.Status,
 		&i.Type,
 		&i.UpdatedAt,
@@ -93,7 +118,7 @@ func (q *Queries) CreateAuction(ctx context.Context, arg CreateAuctionParams) (A
 }
 
 const getAuctionById = `-- name: GetAuctionById :one
-SELECT id, code, owner, organization, register_start_date, register_end_date, bid_start_date, bid_end_date, start_price, status, type, updated_at, created_at FROM auctions
+SELECT id, title, description, code, owner, organization, info, address, register_start_date, register_end_date, bid_start_date, bid_end_date, start_price, step_price, status, type, updated_at, created_at FROM auctions
 WHERE id = $1 LIMIT 1
 `
 
@@ -102,14 +127,19 @@ func (q *Queries) GetAuctionById(ctx context.Context, id int32) (Auction, error)
 	var i Auction
 	err := row.Scan(
 		&i.ID,
+		&i.Title,
+		&i.Description,
 		&i.Code,
 		&i.Owner,
 		&i.Organization,
+		&i.Info,
+		&i.Address,
 		&i.RegisterStartDate,
 		&i.RegisterEndDate,
 		&i.BidStartDate,
 		&i.BidEndDate,
 		&i.StartPrice,
+		&i.StepPrice,
 		&i.Status,
 		&i.Type,
 		&i.UpdatedAt,
@@ -119,7 +149,7 @@ func (q *Queries) GetAuctionById(ctx context.Context, id int32) (Auction, error)
 }
 
 const getByCode = `-- name: GetByCode :one
-SELECT id, code, owner, organization, register_start_date, register_end_date, bid_start_date, bid_end_date, start_price, status, type, updated_at, created_at FROM auctions
+SELECT id, title, description, code, owner, organization, info, address, register_start_date, register_end_date, bid_start_date, bid_end_date, start_price, step_price, status, type, updated_at, created_at FROM auctions
 WHERE code = $1 LIMIT 1
 `
 
@@ -128,14 +158,19 @@ func (q *Queries) GetByCode(ctx context.Context, code string) (Auction, error) {
 	var i Auction
 	err := row.Scan(
 		&i.ID,
+		&i.Title,
+		&i.Description,
 		&i.Code,
 		&i.Owner,
 		&i.Organization,
+		&i.Info,
+		&i.Address,
 		&i.RegisterStartDate,
 		&i.RegisterEndDate,
 		&i.BidStartDate,
 		&i.BidEndDate,
 		&i.StartPrice,
+		&i.StepPrice,
 		&i.Status,
 		&i.Type,
 		&i.UpdatedAt,
@@ -145,7 +180,7 @@ func (q *Queries) GetByCode(ctx context.Context, code string) (Auction, error) {
 }
 
 const getListAuction = `-- name: GetListAuction :many
-SELECT id, code, owner, organization, register_start_date, register_end_date, bid_start_date, bid_end_date, start_price, status, type, updated_at, created_at FROM auctions
+SELECT id, title, description, code, owner, organization, info, address, register_start_date, register_end_date, bid_start_date, bid_end_date, start_price, step_price, status, type, updated_at, created_at FROM auctions
 WHERE ( code LIKE  $1 OR owner LIKE  $1 OR organization LIKE  $1 )
 ORDER BY id ASC LIMIT $3 OFFSET $2
 `
@@ -167,14 +202,19 @@ func (q *Queries) GetListAuction(ctx context.Context, arg GetListAuctionParams) 
 		var i Auction
 		if err := rows.Scan(
 			&i.ID,
+			&i.Title,
+			&i.Description,
 			&i.Code,
 			&i.Owner,
 			&i.Organization,
+			&i.Info,
+			&i.Address,
 			&i.RegisterStartDate,
 			&i.RegisterEndDate,
 			&i.BidStartDate,
 			&i.BidEndDate,
 			&i.StartPrice,
+			&i.StepPrice,
 			&i.Status,
 			&i.Type,
 			&i.UpdatedAt,
@@ -210,7 +250,7 @@ UPDATE auctions
 SET status = $1
 WHERE  id = $2
     RETURNING
-    id, code, owner, organization, register_start_date, register_end_date, bid_start_date, bid_end_date, start_price, status, type, updated_at, created_at
+    id, title, description, code, owner, organization, info, address, register_start_date, register_end_date, bid_start_date, bid_end_date, start_price, step_price, status, type, updated_at, created_at
 `
 
 type UpdateStatusAuctionParams struct {
@@ -223,14 +263,19 @@ func (q *Queries) UpdateStatusAuction(ctx context.Context, arg UpdateStatusAucti
 	var i Auction
 	err := row.Scan(
 		&i.ID,
+		&i.Title,
+		&i.Description,
 		&i.Code,
 		&i.Owner,
 		&i.Organization,
+		&i.Info,
+		&i.Address,
 		&i.RegisterStartDate,
 		&i.RegisterEndDate,
 		&i.BidStartDate,
 		&i.BidEndDate,
 		&i.StartPrice,
+		&i.StepPrice,
 		&i.Status,
 		&i.Type,
 		&i.UpdatedAt,

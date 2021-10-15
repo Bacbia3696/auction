@@ -14,20 +14,29 @@ import (
 )
 
 type CreateAuctionRequest struct {
+	Title             string                  `form:"title" binding:"required"`
+	Description       string                  `form:"description" binding:"required"`
 	Code              string                  `form:"code" binding:"required"`
 	Owner             string                  `form:"owner" binding:"required,min=6"`
 	Organization      string                  `form:"organization" binding:"required"`
+	Info              string                  `form:"info" binding:"required"`
+	Address           string                  `form:"address" binding:"required"`
 	RegisterStartDate time.Time               `form:"registerStartDate" binding:"required"`
 	RegisterEndDate   time.Time               `form:"registerEndDate" binding:"required" `
 	BidStartDate      time.Time               `form:"bidStartDate" binding:"required"`
 	BidEndDate        time.Time               `form:"bidEndDate" binding:"required"`
 	StartPrice        int64                   `form:"startPrice" binding:"required"`
-	Type              int32                     `form:"type" binding:"required"`
+	StepPrice         int64                   `form:"stepPrice" binding:"required"`
+	Type              int32                   `form:"type" binding:"required"`
 	Images            []*multipart.FileHeader `form:"images" binding:"-"`
 }
 type RespAuctions struct {
-	Total    int64        `json:"total"`
-	Auctions []db.Auction `json:"auctions"`
+	Total    int64         `json:"total"`
+	Auctions []AuctionInfo `json:"auctions"`
+}
+type AuctionInfo struct {
+	Auction db.Auction `json:"auction"`
+	Images  []string   `json:"images"`
 }
 
 func (s *Server) CreateAuction(ctx *gin.Context) {
@@ -51,7 +60,7 @@ func (s *Server) CreateAuction(ctx *gin.Context) {
 		}
 	}
 	//check date
-	if req.BidStartDate.After(req.BidEndDate) || req.RegisterStartDate.After(req.RegisterEndDate) || req.RegisterStartDate.After(req.BidStartDate) || req.RegisterEndDate.After(req.BidEndDate) || req.RegisterEndDate.After(req.BidStartDate){
+	if req.BidStartDate.After(req.BidEndDate) || req.RegisterStartDate.After(req.RegisterEndDate) || req.RegisterStartDate.After(req.BidStartDate) || req.RegisterEndDate.After(req.BidEndDate) || req.RegisterEndDate.After(req.BidStartDate) {
 		ResponseErrMsg(ctx, nil, "Date invalid", 403)
 		return
 	}
@@ -81,7 +90,7 @@ func (s *Server) CreateAuction(ctx *gin.Context) {
 			return
 		}
 		fileName := fmt.Sprintf("static/img/%d_%s", auctionId, RandStringRunes(8)+"."+fileNames[1])
-		err = ctx.SaveUploadedFile(images[i], fileName)
+		//err = ctx.SaveUploadedFile(images[i], fileName)
 		if err != nil {
 			logrus.Infoln("error save image auction", err)
 			ResponseErr(ctx, err, http.StatusInternalServerError)
@@ -139,9 +148,20 @@ func (s *Server) ListAuction(ctx *gin.Context) {
 	auctions, err := s.store.GetListAuction(ctx, db.GetListAuctionParams{Code: "%" + keyword + "%", Limit: limit, Offset: offset})
 	count, err := s.store.GetTotalAuction(ctx, "%"+keyword+"%")
 
+	var auctionsInfo []AuctionInfo
+
+	for i := 0; i < len(auctions); i++ {
+		images, _ := s.store.ListAuctionImage(ctx, auctions[i].ID)
+		auction := AuctionInfo{
+			Auction: auctions[i],
+			Images:  images,
+		}
+		auctionsInfo = append(auctionsInfo, auction)
+	}
+
 	data := RespAuctions{
 		Total:    count,
-		Auctions: auctions,
+		Auctions: auctionsInfo,
 	}
 	if err == nil {
 		ResponseOK(ctx, data)
@@ -237,6 +257,23 @@ func (s *Server) ListRegisterAuction(ctx *gin.Context) {
 	})
 	if err == nil {
 		ResponseOK(ctx, auctions)
+		return
+	}
+	logrus.Error(err)
+	ResponseOK(ctx, nil)
+}
+
+
+func (s *Server) GetAuctionDetail(ctx *gin.Context) {
+	aid, _ := strconv.Atoi(ctx.Query("id"))
+	auction, err := s.store.GetAuctionById(ctx, int32(aid))
+	if err == nil {
+		images, _ := s.store.ListAuctionImage(ctx, int32(aid))
+		auction := AuctionInfo{
+			Auction: auction,
+			Images:  images,
+		}
+		ResponseOK(ctx, auction)
 		return
 	}
 	logrus.Error(err)

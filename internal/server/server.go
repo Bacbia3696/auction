@@ -42,7 +42,10 @@ func (server *Server) setupRouter() {
 		v1.POST("/register", server.RegisterUser)
 		v1.POST("/login", server.LoginUser)
 		v1.POST("/auctions", server.ListAuction)
-
+	}
+	v2 := router.Group("/auction")
+	{
+		v2.GET("/detail", server.GetAuctionDetail)
 	}
 
 	authRoutes := router.Group("/").Use(middleware.AuthMiddleware())

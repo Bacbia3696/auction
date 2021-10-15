@@ -116,7 +116,7 @@ func (q *Queries) GetListRegisterAuction(ctx context.Context, arg GetListRegiste
 }
 
 const getListRegisterAuctionByUserId = `-- name: GetListRegisterAuctionByUserId :many
-SELECT au.id, au.code, au.owner, au.organization, au.register_start_date, au.register_end_date, au.bid_start_date, au.bid_end_date, au.start_price, au.status, au.type, au.updated_at, au.created_at, ra.status as verify FROM register_auction as ra INNER JOIN auctions as au ON ra.auction_id = au.id
+SELECT au.id, au.title, au.description, au.code, au.owner, au.organization, au.info, au.address, au.register_start_date, au.register_end_date, au.bid_start_date, au.bid_end_date, au.start_price, au.step_price, au.status, au.type, au.updated_at, au.created_at, ra.status as verify FROM register_auction as ra INNER JOIN auctions as au ON ra.auction_id = au.id
 WHERE ra.user_id = $1 ORDER BY id ASC LIMIT $3 OFFSET $2
 `
 
@@ -128,14 +128,19 @@ type GetListRegisterAuctionByUserIdParams struct {
 
 type GetListRegisterAuctionByUserIdRow struct {
 	ID                int32        `json:"id"`
+	Title             string       `json:"title"`
+	Description       string       `json:"description"`
 	Code              string       `json:"code"`
 	Owner             string       `json:"owner"`
 	Organization      string       `json:"organization"`
+	Info              string       `json:"info"`
+	Address           string       `json:"address"`
 	RegisterStartDate time.Time    `json:"register_start_date"`
 	RegisterEndDate   time.Time    `json:"register_end_date"`
 	BidStartDate      time.Time    `json:"bid_start_date"`
 	BidEndDate        time.Time    `json:"bid_end_date"`
 	StartPrice        int32        `json:"start_price"`
+	StepPrice         int32        `json:"step_price"`
 	Status            int32        `json:"status"`
 	Type              int32        `json:"type"`
 	UpdatedAt         sql.NullTime `json:"updated_at"`
@@ -154,14 +159,19 @@ func (q *Queries) GetListRegisterAuctionByUserId(ctx context.Context, arg GetLis
 		var i GetListRegisterAuctionByUserIdRow
 		if err := rows.Scan(
 			&i.ID,
+			&i.Title,
+			&i.Description,
 			&i.Code,
 			&i.Owner,
 			&i.Organization,
+			&i.Info,
+			&i.Address,
 			&i.RegisterStartDate,
 			&i.RegisterEndDate,
 			&i.BidStartDate,
 			&i.BidEndDate,
 			&i.StartPrice,
+			&i.StepPrice,
 			&i.Status,
 			&i.Type,
 			&i.UpdatedAt,
@@ -201,7 +211,7 @@ func (q *Queries) GetRegisterAuctionById(ctx context.Context, id int32) (Registe
 }
 
 const getRegisterAuctionByUserId = `-- name: GetRegisterAuctionByUserId :one
-SELECT au.id, au.code, au.owner, au.organization, au.register_start_date, au.register_end_date, au.bid_start_date, au.bid_end_date, au.start_price, au.status, au.type, au.updated_at, au.created_at, ra.status as verify FROM register_auction as ra INNER JOIN auctions as au ON ra.auction_id = au.id
+SELECT au.id, au.title, au.description, au.code, au.owner, au.organization, au.info, au.address, au.register_start_date, au.register_end_date, au.bid_start_date, au.bid_end_date, au.start_price, au.step_price, au.status, au.type, au.updated_at, au.created_at, ra.status as verify FROM register_auction as ra INNER JOIN auctions as au ON ra.auction_id = au.id
 WHERE ra.user_id = $1 AND ra.auction_id = $2
 `
 
@@ -212,14 +222,19 @@ type GetRegisterAuctionByUserIdParams struct {
 
 type GetRegisterAuctionByUserIdRow struct {
 	ID                int32        `json:"id"`
+	Title             string       `json:"title"`
+	Description       string       `json:"description"`
 	Code              string       `json:"code"`
 	Owner             string       `json:"owner"`
 	Organization      string       `json:"organization"`
+	Info              string       `json:"info"`
+	Address           string       `json:"address"`
 	RegisterStartDate time.Time    `json:"register_start_date"`
 	RegisterEndDate   time.Time    `json:"register_end_date"`
 	BidStartDate      time.Time    `json:"bid_start_date"`
 	BidEndDate        time.Time    `json:"bid_end_date"`
 	StartPrice        int32        `json:"start_price"`
+	StepPrice         int32        `json:"step_price"`
 	Status            int32        `json:"status"`
 	Type              int32        `json:"type"`
 	UpdatedAt         sql.NullTime `json:"updated_at"`
@@ -232,14 +247,19 @@ func (q *Queries) GetRegisterAuctionByUserId(ctx context.Context, arg GetRegiste
 	var i GetRegisterAuctionByUserIdRow
 	err := row.Scan(
 		&i.ID,
+		&i.Title,
+		&i.Description,
 		&i.Code,
 		&i.Owner,
 		&i.Organization,
+		&i.Info,
+		&i.Address,
 		&i.RegisterStartDate,
 		&i.RegisterEndDate,
 		&i.BidStartDate,
 		&i.BidEndDate,
 		&i.StartPrice,
+		&i.StepPrice,
 		&i.Status,
 		&i.Type,
 		&i.UpdatedAt,

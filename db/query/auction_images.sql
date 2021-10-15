@@ -12,5 +12,5 @@ VALUES (
     RETURNING
     *;
 -- name: ListAuctionImage :many
-SELECT * FROM auction_images
+SELECT auction_images.url FROM auction_images
 WHERE auction_id = $1;

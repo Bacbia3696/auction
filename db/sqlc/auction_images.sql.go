@@ -35,23 +35,23 @@ func (q *Queries) CreateAuctionImage(ctx context.Context, arg CreateAuctionImage
 }
 
 const listAuctionImage = `-- name: ListAuctionImage :many
-SELECT id, auction_id, url FROM auction_images
+SELECT auction_images.url FROM auction_images
 WHERE auction_id = $1
 `
 
-func (q *Queries) ListAuctionImage(ctx context.Context, auctionID int32) ([]AuctionImage, error) {
+func (q *Queries) ListAuctionImage(ctx context.Context, auctionID int32) ([]string, error) {
 	rows, err := q.db.QueryContext(ctx, listAuctionImage, auctionID)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
-	items := []AuctionImage{}
+	items := []string{}
 	for rows.Next() {
-		var i AuctionImage
-		if err := rows.Scan(&i.ID, &i.AuctionID, &i.Url); err != nil {
+		var url string
+		if err := rows.Scan(&url); err != nil {
 			return nil, err
 		}
-		items = append(items, i)
+		items = append(items, url)
 	}
 	if err := rows.Close(); err != nil {
 		return nil, err
