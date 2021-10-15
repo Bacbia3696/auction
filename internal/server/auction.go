@@ -90,7 +90,7 @@ func (s *Server) CreateAuction(ctx *gin.Context) {
 			return
 		}
 		fileName := fmt.Sprintf("static/img/%d_%s", auctionId, RandStringRunes(8)+"."+fileNames[1])
-		//err = ctx.SaveUploadedFile(images[i], fileName)
+		err = ctx.SaveUploadedFile(images[i], fileName)
 		if err != nil {
 			logrus.Infoln("error save image auction", err)
 			ResponseErr(ctx, err, http.StatusInternalServerError)
