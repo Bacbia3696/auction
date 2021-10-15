@@ -1,14 +1,19 @@
 -- query.sql
 -- name: CreateAuction :one
 INSERT INTO auctions (
+    title,
+    description,
     code,
     owner,
     organization,
+    info,
+    address,
     register_start_date,
     register_end_date,
     bid_start_date,
     bid_end_date,
     start_price,
+    step_price,
     status,
     type ,
     updated_at,
@@ -26,7 +31,12 @@ VALUES (
        $9,
        $10,
        $11,
-       $12
+       $12,
+       $13,
+       $14,
+       $15,
+       $16,
+       $17
          )
     RETURNING
     *;
