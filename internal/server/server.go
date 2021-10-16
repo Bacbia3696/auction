@@ -35,7 +35,6 @@ func (s *Server) Serve() error {
 
 func (server *Server) setupRouter() {
 	router := gin.Default()
-	router.Use(cors.Default())
 	corsConfig := cors.DefaultConfig()
 	corsConfig.AllowAllOrigins = true
 	corsConfig.AllowHeaders = append(corsConfig.AllowHeaders, "Authorization")
