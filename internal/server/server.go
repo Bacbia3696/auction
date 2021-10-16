@@ -36,6 +36,10 @@ func (s *Server) Serve() error {
 func (server *Server) setupRouter() {
 	router := gin.Default()
 	router.Use(cors.Default())
+	corsConfig := cors.DefaultConfig()
+	corsConfig.AllowAllOrigins = true
+	corsConfig.AllowHeaders = append(corsConfig.AllowHeaders, "Authorization")
+	router.Use(cors.New(corsConfig))
 	router.Use(static.Serve("/static", static.LocalFile("./static", false)))
 	v1 := router.Group("/user")
 	{
@@ -55,7 +59,6 @@ func (server *Server) setupRouter() {
 		authRoutes.POST("/cms/list-user", server.ListUser)
 		authRoutes.GET("/cms/user/detail", server.ViewDetailUser)
 
-
 		authRoutes.POST("/cms/auction/create", server.CreateAuction)
 		authRoutes.GET("/cms/auction/verify", server.VerifyAuction)
 		authRoutes.GET("/cms/register-auction/verify", server.VerifyRegisterAuction)
@@ -65,7 +68,6 @@ func (server *Server) setupRouter() {
 		authRoutes.POST("/user/list/register-auction", server.ListRegisterAuction)
 		authRoutes.POST("/user/auction/bid", server.DoBid)
 		authRoutes.GET("/user/info", server.GetUserInfo)
-
 
 	}
 	server.router = router
