@@ -38,6 +38,9 @@ type createUserRequest struct {
 	OrganizationDate    string                  `form:"organizationDate"`
 	OrganizationAddress string                  `form:"organizationAddress"`
 	Images              []*multipart.FileHeader `form:"images" binding:"required"`
+	FrontImage          multipart.FileHeader    `form:"frontImage" binding:"required"`
+	BackImage           multipart.FileHeader    `form:"backImage" binding:"required"`
+	BusinessRegImage    multipart.FileHeader    `form:"businessRegImage"`
 }
 type UserLogin struct {
 	UserName string `json:"userName" binding:"required"`
@@ -158,8 +161,27 @@ func (s *Server) RegisterUser(ctx *gin.Context) {
 		ResponseErr(ctx, err, http.StatusInternalServerError)
 		return
 	}
+	frontImage := forms.File["frontImage"]
+	s.handleSaveImage(ctx, frontImage, user.ID,1)
+	backImage := forms.File["backImage"]
+	s.handleSaveImage(ctx, backImage, user.ID,2)
+	if req.RoleId==4 {
+		businessRegImage := forms.File["businessRegImage"]
+		s.handleSaveImage(ctx, businessRegImage, user.ID,3)
+	}
 	images := forms.File["images"]
+	s.handleSaveImage(ctx, images, user.ID,4)
 
+	token, err := token.GenToken(user)
+	if err != nil {
+		logrus.Infoln("error GenToken", err)
+		ResponseErr(ctx, err, http.StatusInternalServerError)
+		return
+	}
+	ResponseOK(ctx, token)
+}
+
+func (s *Server) handleSaveImage(ctx *gin.Context, images []*multipart.FileHeader, userId int32, typeId int32) {
 	for i := 0; i < len(images); i++ {
 		logrus.Infoln("images", images[i].Filename)
 		fileNames := strings.Split(images[i].Filename, ".")
@@ -168,17 +190,17 @@ func (s *Server) RegisterUser(ctx *gin.Context) {
 			ResponseErrMsg(ctx, nil, "Images input invalid ", 403)
 			return
 		}
-		fileName := fmt.Sprintf("static/img/%d_%s", user.ID, RandStringRunes(8)+"."+fileNames[1])
-		err = ctx.SaveUploadedFile(images[i], fileName)
+		fileName := fmt.Sprintf("static/img/%d_%s", userId, RandStringRunes(8)+"."+fileNames[1])
+		err := ctx.SaveUploadedFile(images[i], fileName)
 		if err != nil {
 			logrus.Infoln("error save image", err)
 			ResponseErr(ctx, err, http.StatusInternalServerError)
 			return
 		}
 		_, err = s.store.CreateUserImage(ctx, db.CreateUserImageParams{
-			UserID: user.ID,
+			UserID: userId,
 			Url:    fileName,
-			Type:   1,
+			Type:   typeId,
 		})
 		if err != nil {
 			logrus.Infoln("error save user image", err)
@@ -186,13 +208,6 @@ func (s *Server) RegisterUser(ctx *gin.Context) {
 			return
 		}
 	}
-	token, err := token.GenToken(user)
-	if err != nil {
-		logrus.Infoln("error GenToken", err)
-		ResponseErr(ctx, err, http.StatusInternalServerError)
-		return
-	}
-	ResponseOK(ctx, token)
 }
 
 func (s *Server) LoginUser(ctx *gin.Context) {
@@ -270,8 +285,8 @@ func (s *Server) GetUserInfo(ctx *gin.Context) {
 		images, _ := s.store.ListImage(ctx, userId)
 		roleId, _ := s.store.GetRoleByUserId(ctx, userId)
 		userInfo := UserInfo{
-			User: user,
-			Images:  images,
+			User:   user,
+			Images: images,
 			RoleId: roleId,
 		}
 		ResponseOK(ctx, userInfo)

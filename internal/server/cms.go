@@ -115,7 +115,7 @@ func (s *Server) LockUser(ctx *gin.Context) {
 
 type UserInfo struct {
 	User   db.User  `json:"user"`
-	Images []string `json:"images"`
+	Images []db.UserImage `json:"images"`
 	RoleId int32    `json:"roleId"`
 }
 
