@@ -14,5 +14,5 @@ VALUES (
     RETURNING
     *;
 -- name: ListImage :many
-SELECT * FROM user_images
+SELECT user_images.url FROM user_images
 WHERE user_id = $1;

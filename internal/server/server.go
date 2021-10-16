@@ -53,6 +53,8 @@ func (server *Server) setupRouter() {
 		authRoutes.GET("/cms/verify", server.VerifyUser)
 		authRoutes.GET("/cms/lock", server.LockUser)
 		authRoutes.POST("/cms/list-user", server.ListUser)
+		authRoutes.GET("/cms/user/detail", server.ViewDetailUser)
+
 
 		authRoutes.POST("/cms/auction/create", server.CreateAuction)
 		authRoutes.GET("/cms/auction/verify", server.VerifyAuction)
@@ -62,6 +64,8 @@ func (server *Server) setupRouter() {
 		authRoutes.GET("/user/register-auction", server.RegisterAuction)
 		authRoutes.POST("/user/list/register-auction", server.ListRegisterAuction)
 		authRoutes.POST("/user/auction/bid", server.DoBid)
+		authRoutes.GET("/user/info", server.GetUserInfo)
+
 
 	}
 	server.router = router

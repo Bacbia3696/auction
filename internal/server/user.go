@@ -186,7 +186,13 @@ func (s *Server) RegisterUser(ctx *gin.Context) {
 			return
 		}
 	}
-	ResponseOK(ctx, user)
+	token, err := token.GenToken(user)
+	if err != nil {
+		logrus.Infoln("error GenToken", err)
+		ResponseErr(ctx, err, http.StatusInternalServerError)
+		return
+	}
+	ResponseOK(ctx, token)
 }
 
 func (s *Server) LoginUser(ctx *gin.Context) {
@@ -255,4 +261,23 @@ func (s *Server) ChangePassword(ctx *gin.Context) {
 			ResponseErrMsg(ctx, nil, "Password invalid ", 401)
 		}
 	}
+}
+
+func (s *Server) GetUserInfo(ctx *gin.Context) {
+	userId := s.GetUserId(ctx)
+	user, err := s.store.GetById(ctx, userId)
+	if err == nil {
+		images, _ := s.store.ListImage(ctx, userId)
+		roleId, _ := s.store.GetRoleByUserId(ctx, userId)
+		userInfo := UserInfo{
+			User: user,
+			Images:  images,
+			RoleId: roleId,
+		}
+		ResponseOK(ctx, userInfo)
+		return
+	}
+	logrus.Error("GetUserInfo ", err)
+	ResponseErr(ctx, err, http.StatusInternalServerError)
+	return
 }

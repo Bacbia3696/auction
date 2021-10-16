@@ -43,28 +43,23 @@ func (q *Queries) CreateUserImage(ctx context.Context, arg CreateUserImageParams
 }
 
 const listImage = `-- name: ListImage :many
-SELECT id, user_id, url, type FROM user_images
+SELECT user_images.url FROM user_images
 WHERE user_id = $1
 `
 
-func (q *Queries) ListImage(ctx context.Context, userID int32) ([]UserImage, error) {
+func (q *Queries) ListImage(ctx context.Context, userID int32) ([]string, error) {
 	rows, err := q.db.QueryContext(ctx, listImage, userID)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
-	items := []UserImage{}
+	items := []string{}
 	for rows.Next() {
-		var i UserImage
-		if err := rows.Scan(
-			&i.ID,
-			&i.UserID,
-			&i.Url,
-			&i.Type,
-		); err != nil {
+		var url string
+		if err := rows.Scan(&url); err != nil {
 			return nil, err
 		}
-		items = append(items, i)
+		items = append(items, url)
 	}
 	if err := rows.Close(); err != nil {
 		return nil, err

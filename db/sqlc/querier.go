@@ -34,7 +34,7 @@ type Querier interface {
 	GetTotalRegisterAuction(ctx context.Context, auctionID int32) (int64, error)
 	GetTotalUser(ctx context.Context, userName string) (int64, error)
 	ListAuctionImage(ctx context.Context, auctionID int32) ([]string, error)
-	ListImage(ctx context.Context, userID int32) ([]UserImage, error)
+	ListImage(ctx context.Context, userID int32) ([]string, error)
 	ListRegisterAuctionImage(ctx context.Context, registerAuctionID int32) ([]RegisterAuctionImage, error)
 	ListRole(ctx context.Context) ([]Role, error)
 	UpdatePassword(ctx context.Context, arg UpdatePasswordParams) (User, error)

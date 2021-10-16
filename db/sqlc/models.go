@@ -67,7 +67,7 @@ type Role struct {
 type User struct {
 	ID                  int32          `json:"id"`
 	UserName            string         `json:"user_name"`
-	Password            string         `json:"password"`
+	Password            string         `json:"-"`
 	FullName            string         `json:"full_name"`
 	Email               string         `json:"email"`
 	Address             string         `json:"address"`

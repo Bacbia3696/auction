@@ -5,6 +5,7 @@ import (
 	"github.com/bacbia3696/auction/internal/token"
 	"github.com/gin-gonic/gin"
 	"github.com/sirupsen/logrus"
+	"net/http"
 	"strconv"
 )
 
@@ -32,8 +33,8 @@ type Request struct {
 }
 
 type RespUsers struct {
-	Total int64 `json:"total"`
-	Users    []db.User  `json:"users"`
+	Total int64     `json:"total"`
+	Users []db.User `json:"users"`
 }
 
 func (s *Server) ListUser(ctx *gin.Context) {
@@ -60,9 +61,9 @@ func (s *Server) ListUser(ctx *gin.Context) {
 		return
 	}
 	users, err := s.store.GetListUser(ctx, db.GetListUserParams{UserName: "%" + keyword + "%", Limit: limit, Offset: offset})
-	count, err := s.store.GetTotalUser(ctx,  "%" + keyword + "%")
+	count, err := s.store.GetTotalUser(ctx, "%"+keyword+"%")
 
-	data := RespUsers {
+	data := RespUsers{
 		Total: count,
 		Users: users,
 	}
@@ -110,4 +111,34 @@ func (s *Server) LockUser(ctx *gin.Context) {
 		}
 	}
 	ResponseOK(ctx, nil)
+}
+
+type UserInfo struct {
+	User   db.User  `json:"user"`
+	Images []string `json:"images"`
+	RoleId int32    `json:"roleId"`
+}
+
+func (s *Server) ViewDetailUser(ctx *gin.Context) {
+	roleId := s.GetRoleId(ctx)
+	if roleId > 2 {
+		ResponseErrMsg(ctx, nil, "User have not permission", -1)
+		return
+	}
+	uid, _ := strconv.Atoi(ctx.Query("id"))
+	user, err := s.store.GetById(ctx, int32(uid))
+	if err == nil {
+		images, _ := s.store.ListImage(ctx, int32(uid))
+		roleId, _ := s.store.GetRoleByUserId(ctx, int32(uid))
+		userInfo := UserInfo{
+			User:   user,
+			Images: images,
+			RoleId: roleId,
+		}
+		ResponseOK(ctx, userInfo)
+		return
+	}
+	logrus.Error("ViewDetailUser ", err)
+	ResponseErr(ctx, err, http.StatusInternalServerError)
+	return
 }
