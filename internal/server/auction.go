@@ -263,7 +263,6 @@ func (s *Server) ListRegisterAuction(ctx *gin.Context) {
 	ResponseOK(ctx, nil)
 }
 
-
 func (s *Server) GetAuctionDetail(ctx *gin.Context) {
 	aid, _ := strconv.Atoi(ctx.Query("id"))
 	auction, err := s.store.GetAuctionById(ctx, int32(aid))
@@ -278,4 +277,19 @@ func (s *Server) GetAuctionDetail(ctx *gin.Context) {
 	}
 	logrus.Error(err)
 	ResponseOK(ctx, nil)
+}
+
+func (s *Server) GetAuctionStatus(ctx *gin.Context) {
+	aid, _ := strconv.Atoi(ctx.Query("id"))
+	uid := s.GetUserId(ctx)
+	auction, err := s.store.GetRegisterAuctionByUserId(ctx, db.GetRegisterAuctionByUserIdParams{
+		UserID:    uid,
+		AuctionID: int32(aid),
+	})
+	status := -1
+
+	if err == nil {
+		status = int(auction.Verify)
+	}
+	ResponseOK(ctx, status)
 }
