@@ -53,8 +53,8 @@ func (server *Server) setupRouter() {
 
 	authRoutes := router.Group("/").Use(middleware.AuthMiddleware())
 	{
-		authRoutes.GET("/cms/verify", server.VerifyUser)
-		authRoutes.GET("/cms/lock", server.LockUser)
+		authRoutes.POST("/cms/verify", server.VerifyUser)
+		authRoutes.POST("/cms/lock", server.LockUser)
 		authRoutes.POST("/cms/list-user", server.ListUser)
 		authRoutes.GET("/cms/user/detail", server.ViewDetailUser)
 
