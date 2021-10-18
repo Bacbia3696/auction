@@ -293,3 +293,26 @@ func (s *Server) GetAuctionStatus(ctx *gin.Context) {
 	}
 	ResponseOK(ctx, status)
 }
+func (s *Server) GetMaxBidAuction(ctx *gin.Context) {
+	aid, _ := strconv.Atoi(ctx.Query("id"))
+	uid := s.GetUserId(ctx)
+	auction, err := s.store.GetRegisterAuctionByUserId(ctx, db.GetRegisterAuctionByUserIdParams{
+		UserID:    uid,
+		AuctionID: int32(aid),
+	})
+	if err != nil {
+		logrus.Error(err)
+		ResponseErrMsg(ctx, nil, "User have not permission", -1)
+		return
+	}
+	if auction.Verify <= 0 {
+		ResponseErrMsg(ctx, nil, "User have not permission", -1)
+		return
+	}
+	maxPrice, err := s.store.GetMaxBid(ctx, int32(aid))
+	if err == nil && maxPrice != nil {
+		ResponseOK(ctx, maxPrice)
+		return
+	}
+	ResponseOK(ctx, auction.StartPrice)
+}

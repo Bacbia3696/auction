@@ -68,6 +68,8 @@ func (server *Server) setupRouter() {
 		authRoutes.POST("/user/auction/bid", server.DoBid)
 		authRoutes.GET("/user/info", server.GetUserInfo)
 		authRoutes.GET("/user/auction/status", server.GetAuctionStatus)
+		authRoutes.GET("/auction/max-price", server.GetMaxBidAuction)
+
 	}
 	server.router = router
 }
