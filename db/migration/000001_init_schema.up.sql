@@ -20,7 +20,8 @@ CREATE TABLE users (
     organization_address text,
     position text,
     created_at timestamptz NOT NULL DEFAULT (now()),
-    updated_at timestamptz
+    updated_at timestamptz,
+    CONSTRAINT UC_User UNIQUE (user_name,email,id_card)
 );
 
 CREATE TABLE user_images (
@@ -38,7 +39,8 @@ CREATE TABLE ROLE (
 CREATE TABLE user_role (
     id serial PRIMARY KEY,
     user_id int NOT NULL,
-    role_id int NOT NULL
+    role_id int NOT NULL,
+    UNIQUE (user_id)
 );
 
 CREATE OR REPLACE FUNCTION update_modified_column ()
@@ -74,7 +76,8 @@ CREATE TABLE auctions (
     status int NOT NULL,
     type int NOT NULL,
     updated_at timestamptz,
-    created_at timestamptz NOT NULL DEFAULT (now())
+    created_at timestamptz NOT NULL DEFAULT (now()),
+    UNIQUE (code)
 );
 
 CREATE TABLE auction_images (
@@ -89,7 +92,8 @@ CREATE TABLE register_auction (
     user_id int NOT NULL,
     status int NOT NULL,
     updated_at timestamptz,
-    created_at timestamptz NOT NULL DEFAULT (now())
+    created_at timestamptz NOT NULL DEFAULT (now()),
+    CONSTRAINT UC_Register_Auction UNIQUE (auction_id,user_id)
 );
 
 CREATE TABLE register_auction_images (
