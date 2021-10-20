@@ -18,6 +18,7 @@ CREATE TABLE users (
     organization_id text,
     organization_date date,
     organization_address text,
+    tax_id text,
     position text,
     created_at timestamptz NOT NULL DEFAULT (now()),
     updated_at timestamptz,

@@ -37,6 +37,7 @@ type createUserRequest struct {
 	OrganizationId      string                  `form:"organizationId"`
 	OrganizationDate    string                  `form:"organizationDate"`
 	OrganizationAddress string                  `form:"organizationAddress"`
+	TaxId               string                  `form:"taxId"`
 	Images              []*multipart.FileHeader `form:"images" binding:"required"`
 	FrontImage          multipart.FileHeader    `form:"frontImage" binding:"required"`
 	BackImage           multipart.FileHeader    `form:"backImage" binding:"required"`
@@ -76,7 +77,7 @@ func (s *Server) RegisterUser(ctx *gin.Context) {
 	}
 	// organization
 	if req.RoleId == 4 {
-		if govalidator.IsNull(req.OrganizationName) || govalidator.IsNull(req.OrganizationId) || govalidator.IsNull(req.OrganizationAddress) {
+		if govalidator.IsNull(req.OrganizationName) || govalidator.IsNull(req.OrganizationId) || govalidator.IsNull(req.OrganizationAddress) || govalidator.IsNull(req.TaxId) {
 			ResponseErrMsg(ctx, nil, "Input invalid", 1)
 			return
 		}
@@ -135,6 +136,10 @@ func (s *Server) RegisterUser(ctx *gin.Context) {
 			String: req.OrganizationAddress,
 			Valid:  true,
 		}
+		params.TaxID = sql.NullString{
+			String: req.TaxId,
+			Valid:  true,
+		}
 	}
 	params.Birthdate = sql.NullTime{
 		Time:  req.BirthDate,
@@ -162,15 +167,15 @@ func (s *Server) RegisterUser(ctx *gin.Context) {
 		return
 	}
 	frontImage := forms.File["frontImage"]
-	s.handleSaveImage(ctx, frontImage, user.ID,1)
+	s.handleSaveImage(ctx, frontImage, user.ID, 1)
 	backImage := forms.File["backImage"]
-	s.handleSaveImage(ctx, backImage, user.ID,2)
-	if req.RoleId==4 {
+	s.handleSaveImage(ctx, backImage, user.ID, 2)
+	if req.RoleId == 4 {
 		businessRegImage := forms.File["businessRegImage"]
-		s.handleSaveImage(ctx, businessRegImage, user.ID,3)
+		s.handleSaveImage(ctx, businessRegImage, user.ID, 3)
 	}
 	images := forms.File["images"]
-	s.handleSaveImage(ctx, images, user.ID,4)
+	s.handleSaveImage(ctx, images, user.ID, 4)
 
 	token, err := token.GenToken(user)
 	if err != nil {

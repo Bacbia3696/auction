@@ -28,7 +28,8 @@ INSERT INTO users (
     organization_name,
     organization_id ,
     organization_date ,
-    organization_address
+    organization_address,
+    tax_id
 )
 VALUES (
        $1,
@@ -48,9 +49,10 @@ VALUES (
        $15,
        $16,
        $17,
-       $18)
+       $18,
+       $19)
     RETURNING
-    id, user_name, password, full_name, email, address, phone, birthdate, id_card, id_card_address, id_card_date, bank_id, bank_owner, bank_name, status, organization_name, organization_id, organization_date, organization_address, position, created_at, updated_at
+    id, user_name, password, full_name, email, address, phone, birthdate, id_card, id_card_address, id_card_date, bank_id, bank_owner, bank_name, status, organization_name, organization_id, organization_date, organization_address, tax_id, position, created_at, updated_at
 `
 
 type CreateUserParams struct {
@@ -72,6 +74,7 @@ type CreateUserParams struct {
 	OrganizationID      sql.NullString `json:"organization_id"`
 	OrganizationDate    sql.NullTime   `json:"organization_date"`
 	OrganizationAddress sql.NullString `json:"organization_address"`
+	TaxID               sql.NullString `json:"tax_id"`
 }
 
 // query.sql
@@ -95,6 +98,7 @@ func (q *Queries) CreateUser(ctx context.Context, arg CreateUserParams) (User, e
 		arg.OrganizationID,
 		arg.OrganizationDate,
 		arg.OrganizationAddress,
+		arg.TaxID,
 	)
 	var i User
 	err := row.Scan(
@@ -117,6 +121,7 @@ func (q *Queries) CreateUser(ctx context.Context, arg CreateUserParams) (User, e
 		&i.OrganizationID,
 		&i.OrganizationDate,
 		&i.OrganizationAddress,
+		&i.TaxID,
 		&i.Position,
 		&i.CreatedAt,
 		&i.UpdatedAt,
@@ -124,8 +129,66 @@ func (q *Queries) CreateUser(ctx context.Context, arg CreateUserParams) (User, e
 	return i, err
 }
 
+const getAllListUserRegisterAuction = `-- name: GetAllListUserRegisterAuction :many
+SELECT u.user_name, u.full_name, u.phone, u.email, u.id_card, u.bank_id, ra.created_at, ra.status as verify
+FROM register_auction as ra
+INNER JOIN auctions as au ON ra.auction_id = au.id
+INNER JOIN users as u ON ra.user_id = u.id
+WHERE ra.auction_id = $1
+ORDER BY u.id ASC LIMIT $3 OFFSET $2
+`
+
+type GetAllListUserRegisterAuctionParams struct {
+	AuctionID int32 `json:"auction_id"`
+	Offset    int32 `json:"offset"`
+	Limit     int32 `json:"limit"`
+}
+
+type GetAllListUserRegisterAuctionRow struct {
+	UserName  string    `json:"user_name"`
+	FullName  string    `json:"full_name"`
+	Phone     string    `json:"phone"`
+	Email     string    `json:"email"`
+	IDCard    string    `json:"id_card"`
+	BankID    string    `json:"bank_id"`
+	CreatedAt time.Time `json:"created_at"`
+	Verify    int32     `json:"verify"`
+}
+
+func (q *Queries) GetAllListUserRegisterAuction(ctx context.Context, arg GetAllListUserRegisterAuctionParams) ([]GetAllListUserRegisterAuctionRow, error) {
+	rows, err := q.db.QueryContext(ctx, getAllListUserRegisterAuction, arg.AuctionID, arg.Offset, arg.Limit)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []GetAllListUserRegisterAuctionRow{}
+	for rows.Next() {
+		var i GetAllListUserRegisterAuctionRow
+		if err := rows.Scan(
+			&i.UserName,
+			&i.FullName,
+			&i.Phone,
+			&i.Email,
+			&i.IDCard,
+			&i.BankID,
+			&i.CreatedAt,
+			&i.Verify,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const getByEmail = `-- name: GetByEmail :one
-SELECT id, user_name, password, full_name, email, address, phone, birthdate, id_card, id_card_address, id_card_date, bank_id, bank_owner, bank_name, status, organization_name, organization_id, organization_date, organization_address, position, created_at, updated_at FROM users
+SELECT id, user_name, password, full_name, email, address, phone, birthdate, id_card, id_card_address, id_card_date, bank_id, bank_owner, bank_name, status, organization_name, organization_id, organization_date, organization_address, tax_id, position, created_at, updated_at FROM users
 WHERE email = $1 LIMIT 1
 `
 
@@ -152,6 +215,7 @@ func (q *Queries) GetByEmail(ctx context.Context, email string) (User, error) {
 		&i.OrganizationID,
 		&i.OrganizationDate,
 		&i.OrganizationAddress,
+		&i.TaxID,
 		&i.Position,
 		&i.CreatedAt,
 		&i.UpdatedAt,
@@ -160,7 +224,7 @@ func (q *Queries) GetByEmail(ctx context.Context, email string) (User, error) {
 }
 
 const getById = `-- name: GetById :one
-SELECT id, user_name, password, full_name, email, address, phone, birthdate, id_card, id_card_address, id_card_date, bank_id, bank_owner, bank_name, status, organization_name, organization_id, organization_date, organization_address, position, created_at, updated_at FROM users
+SELECT id, user_name, password, full_name, email, address, phone, birthdate, id_card, id_card_address, id_card_date, bank_id, bank_owner, bank_name, status, organization_name, organization_id, organization_date, organization_address, tax_id, position, created_at, updated_at FROM users
 WHERE id = $1 LIMIT 1
 `
 
@@ -187,6 +251,7 @@ func (q *Queries) GetById(ctx context.Context, id int32) (User, error) {
 		&i.OrganizationID,
 		&i.OrganizationDate,
 		&i.OrganizationAddress,
+		&i.TaxID,
 		&i.Position,
 		&i.CreatedAt,
 		&i.UpdatedAt,
@@ -195,7 +260,7 @@ func (q *Queries) GetById(ctx context.Context, id int32) (User, error) {
 }
 
 const getByIdCard = `-- name: GetByIdCard :one
-SELECT id, user_name, password, full_name, email, address, phone, birthdate, id_card, id_card_address, id_card_date, bank_id, bank_owner, bank_name, status, organization_name, organization_id, organization_date, organization_address, position, created_at, updated_at FROM users
+SELECT id, user_name, password, full_name, email, address, phone, birthdate, id_card, id_card_address, id_card_date, bank_id, bank_owner, bank_name, status, organization_name, organization_id, organization_date, organization_address, tax_id, position, created_at, updated_at FROM users
 WHERE id_card = $1 LIMIT 1
 `
 
@@ -222,6 +287,7 @@ func (q *Queries) GetByIdCard(ctx context.Context, idCard string) (User, error) 
 		&i.OrganizationID,
 		&i.OrganizationDate,
 		&i.OrganizationAddress,
+		&i.TaxID,
 		&i.Position,
 		&i.CreatedAt,
 		&i.UpdatedAt,
@@ -230,7 +296,7 @@ func (q *Queries) GetByIdCard(ctx context.Context, idCard string) (User, error) 
 }
 
 const getByUserName = `-- name: GetByUserName :one
-SELECT id, user_name, password, full_name, email, address, phone, birthdate, id_card, id_card_address, id_card_date, bank_id, bank_owner, bank_name, status, organization_name, organization_id, organization_date, organization_address, position, created_at, updated_at FROM users
+SELECT id, user_name, password, full_name, email, address, phone, birthdate, id_card, id_card_address, id_card_date, bank_id, bank_owner, bank_name, status, organization_name, organization_id, organization_date, organization_address, tax_id, position, created_at, updated_at FROM users
 WHERE user_name = $1 LIMIT 1
 `
 
@@ -257,6 +323,7 @@ func (q *Queries) GetByUserName(ctx context.Context, userName string) (User, err
 		&i.OrganizationID,
 		&i.OrganizationDate,
 		&i.OrganizationAddress,
+		&i.TaxID,
 		&i.Position,
 		&i.CreatedAt,
 		&i.UpdatedAt,
@@ -265,7 +332,7 @@ func (q *Queries) GetByUserName(ctx context.Context, userName string) (User, err
 }
 
 const getByUserNameActive = `-- name: GetByUserNameActive :one
-SELECT id, user_name, password, full_name, email, address, phone, birthdate, id_card, id_card_address, id_card_date, bank_id, bank_owner, bank_name, status, organization_name, organization_id, organization_date, organization_address, position, created_at, updated_at FROM users
+SELECT id, user_name, password, full_name, email, address, phone, birthdate, id_card, id_card_address, id_card_date, bank_id, bank_owner, bank_name, status, organization_name, organization_id, organization_date, organization_address, tax_id, position, created_at, updated_at FROM users
 WHERE user_name = $1 AND status > 0 LIMIT 1
 `
 
@@ -292,6 +359,7 @@ func (q *Queries) GetByUserNameActive(ctx context.Context, userName string) (Use
 		&i.OrganizationID,
 		&i.OrganizationDate,
 		&i.OrganizationAddress,
+		&i.TaxID,
 		&i.Position,
 		&i.CreatedAt,
 		&i.UpdatedAt,
@@ -300,7 +368,7 @@ func (q *Queries) GetByUserNameActive(ctx context.Context, userName string) (Use
 }
 
 const getListUser = `-- name: GetListUser :many
-SELECT id, user_name, password, full_name, email, address, phone, birthdate, id_card, id_card_address, id_card_date, bank_id, bank_owner, bank_name, status, organization_name, organization_id, organization_date, organization_address, position, created_at, updated_at FROM users
+SELECT id, user_name, password, full_name, email, address, phone, birthdate, id_card, id_card_address, id_card_date, bank_id, bank_owner, bank_name, status, organization_name, organization_id, organization_date, organization_address, tax_id, position, created_at, updated_at FROM users
 WHERE ( user_name LIKE  $1 OR full_name LIKE  $1 OR organization_name LIKE  $1 OR id_card LIKE  $1 OR organization_id LIKE  $1 OR email  LIKE  $1)
 ORDER BY id ASC LIMIT $3 OFFSET $2
 `
@@ -340,9 +408,74 @@ func (q *Queries) GetListUser(ctx context.Context, arg GetListUserParams) ([]Use
 			&i.OrganizationID,
 			&i.OrganizationDate,
 			&i.OrganizationAddress,
+			&i.TaxID,
 			&i.Position,
 			&i.CreatedAt,
 			&i.UpdatedAt,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const getListUserRegisterAuctionByStatus = `-- name: GetListUserRegisterAuctionByStatus :many
+SELECT u.user_name, u.full_name, u.phone, u.email, u.id_card, u.bank_id, ra.created_at, ra.status as verify
+FROM register_auction as ra
+         INNER JOIN auctions as au ON ra.auction_id = au.id
+         INNER JOIN users as u ON ra.user_id = u.id
+WHERE ra.auction_id = $1 AND ra.status =$2
+ORDER BY u.id ASC LIMIT $4 OFFSET $3
+`
+
+type GetListUserRegisterAuctionByStatusParams struct {
+	AuctionID int32 `json:"auction_id"`
+	Status    int32 `json:"status"`
+	Offset    int32 `json:"offset"`
+	Limit     int32 `json:"limit"`
+}
+
+type GetListUserRegisterAuctionByStatusRow struct {
+	UserName  string    `json:"user_name"`
+	FullName  string    `json:"full_name"`
+	Phone     string    `json:"phone"`
+	Email     string    `json:"email"`
+	IDCard    string    `json:"id_card"`
+	BankID    string    `json:"bank_id"`
+	CreatedAt time.Time `json:"created_at"`
+	Verify    int32     `json:"verify"`
+}
+
+func (q *Queries) GetListUserRegisterAuctionByStatus(ctx context.Context, arg GetListUserRegisterAuctionByStatusParams) ([]GetListUserRegisterAuctionByStatusRow, error) {
+	rows, err := q.db.QueryContext(ctx, getListUserRegisterAuctionByStatus,
+		arg.AuctionID,
+		arg.Status,
+		arg.Offset,
+		arg.Limit,
+	)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []GetListUserRegisterAuctionByStatusRow{}
+	for rows.Next() {
+		var i GetListUserRegisterAuctionByStatusRow
+		if err := rows.Scan(
+			&i.UserName,
+			&i.FullName,
+			&i.Phone,
+			&i.Email,
+			&i.IDCard,
+			&i.BankID,
+			&i.CreatedAt,
+			&i.Verify,
 		); err != nil {
 			return nil, err
 		}
@@ -369,12 +502,47 @@ func (q *Queries) GetTotalUser(ctx context.Context, userName string) (int64, err
 	return count, err
 }
 
+const getTotalUserRegisterAuction = `-- name: GetTotalUserRegisterAuction :one
+SELECT  COUNT(*)
+FROM register_auction as ra
+         INNER JOIN auctions as au ON ra.auction_id = au.id
+         INNER JOIN users as u ON ra.user_id = u.id
+WHERE ra.auction_id = $1
+`
+
+func (q *Queries) GetTotalUserRegisterAuction(ctx context.Context, auctionID int32) (int64, error) {
+	row := q.db.QueryRowContext(ctx, getTotalUserRegisterAuction, auctionID)
+	var count int64
+	err := row.Scan(&count)
+	return count, err
+}
+
+const getTotalUserRegisterAuctionByStatus = `-- name: GetTotalUserRegisterAuctionByStatus :one
+SELECT  COUNT(*)
+FROM register_auction as ra
+         INNER JOIN auctions as au ON ra.auction_id = au.id
+         INNER JOIN users as u ON ra.user_id = u.id
+WHERE ra.auction_id = $1 AND ra.status =$2
+`
+
+type GetTotalUserRegisterAuctionByStatusParams struct {
+	AuctionID int32 `json:"auction_id"`
+	Status    int32 `json:"status"`
+}
+
+func (q *Queries) GetTotalUserRegisterAuctionByStatus(ctx context.Context, arg GetTotalUserRegisterAuctionByStatusParams) (int64, error) {
+	row := q.db.QueryRowContext(ctx, getTotalUserRegisterAuctionByStatus, arg.AuctionID, arg.Status)
+	var count int64
+	err := row.Scan(&count)
+	return count, err
+}
+
 const updatePassword = `-- name: UpdatePassword :one
 UPDATE users
 SET password = $1
 WHERE  id = $2
     RETURNING
-    id, user_name, password, full_name, email, address, phone, birthdate, id_card, id_card_address, id_card_date, bank_id, bank_owner, bank_name, status, organization_name, organization_id, organization_date, organization_address, position, created_at, updated_at
+    id, user_name, password, full_name, email, address, phone, birthdate, id_card, id_card_address, id_card_date, bank_id, bank_owner, bank_name, status, organization_name, organization_id, organization_date, organization_address, tax_id, position, created_at, updated_at
 `
 
 type UpdatePasswordParams struct {
@@ -405,6 +573,7 @@ func (q *Queries) UpdatePassword(ctx context.Context, arg UpdatePasswordParams) 
 		&i.OrganizationID,
 		&i.OrganizationDate,
 		&i.OrganizationAddress,
+		&i.TaxID,
 		&i.Position,
 		&i.CreatedAt,
 		&i.UpdatedAt,
@@ -417,7 +586,7 @@ UPDATE users
 SET status = $1
 WHERE  id = $2
     RETURNING
-    id, user_name, password, full_name, email, address, phone, birthdate, id_card, id_card_address, id_card_date, bank_id, bank_owner, bank_name, status, organization_name, organization_id, organization_date, organization_address, position, created_at, updated_at
+    id, user_name, password, full_name, email, address, phone, birthdate, id_card, id_card_address, id_card_date, bank_id, bank_owner, bank_name, status, organization_name, organization_id, organization_date, organization_address, tax_id, position, created_at, updated_at
 `
 
 type UpdateStatusParams struct {
@@ -448,6 +617,7 @@ func (q *Queries) UpdateStatus(ctx context.Context, arg UpdateStatusParams) (Use
 		&i.OrganizationID,
 		&i.OrganizationDate,
 		&i.OrganizationAddress,
+		&i.TaxID,
 		&i.Position,
 		&i.CreatedAt,
 		&i.UpdatedAt,

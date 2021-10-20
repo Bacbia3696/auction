@@ -28,7 +28,9 @@ func (s *Server) GetUserId(ctx *gin.Context) int32 {
 
 type Request struct {
 	Keyword string `json:"keyword"`
+	Status  int `json:"status"`
 	Page    int32  `json:"page"`
+	AuctionId    int32  `json:"auctionId"`
 	Size    int32  `json:"size"`
 }
 
@@ -114,9 +116,9 @@ func (s *Server) LockUser(ctx *gin.Context) {
 }
 
 type UserInfo struct {
-	User   db.User  `json:"user"`
+	User   db.User        `json:"user"`
 	Images []db.UserImage `json:"images"`
-	RoleId int32    `json:"roleId"`
+	RoleId int32          `json:"roleId"`
 }
 
 func (s *Server) ViewDetailUser(ctx *gin.Context) {

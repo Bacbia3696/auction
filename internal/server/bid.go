@@ -5,7 +5,6 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/sirupsen/logrus"
 	"net/http"
-	"strconv"
 	"time"
 )
 
@@ -52,15 +51,15 @@ func (s *Server) DoBid(ctx *gin.Context) {
 	}
 
 	//check max price
-	maxPrice, err := s.store.GetMaxBid(ctx, req.AuctionId)
-	if err == nil && maxPrice != nil {
-		if maxPrice.(int64) >= req.Price {
-			logrus.Infoln("Max price of auction: " + auction.Code + ": " + strconv.FormatInt(maxPrice.(int64), 10))
-			logrus.Error("Price bid invalid ")
-			ResponseErrMsg(ctx, err, "Price bid invalid ", -1)
-			return
-		}
-	}
+	//maxPrice, err := s.store.GetMaxBid(ctx, req.AuctionId)
+	//if err == nil && maxPrice != nil {
+	//	if maxPrice.(int64) >= req.Price {
+	//		logrus.Infoln("Max price of auction: " + auction.Code + ": " + strconv.FormatInt(maxPrice.(int64), 10))
+	//		logrus.Error("Price bid invalid ")
+	//		ResponseErrMsg(ctx, err, "Price bid invalid ", -1)
+	//		return
+	//	}
+	//}
 	bid, err := s.store.CreateBid(ctx, db.CreateBidParams{
 		UserID:    userId,
 		AuctionID: req.AuctionId,

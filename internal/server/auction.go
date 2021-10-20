@@ -3,6 +3,7 @@ package server
 import (
 	"fmt"
 	db "github.com/bacbia3696/auction/db/sqlc"
+	"github.com/bacbia3696/auction/internal/paycode"
 	"github.com/gin-gonic/gin"
 	"github.com/jinzhu/copier"
 	"github.com/sirupsen/logrus"
@@ -33,6 +34,7 @@ type CreateAuctionRequest struct {
 type RespAuctions struct {
 	Total    int64         `json:"total"`
 	Auctions []AuctionInfo `json:"auctions"`
+	PayCode  string        `json:"payCode"`
 }
 type AuctionInfo struct {
 	Auction db.Auction `json:"auction"`
@@ -195,6 +197,7 @@ func (s *Server) RegisterAuction(ctx *gin.Context) {
 				AuctionID: int32(auctionId),
 				UserID:    userId,
 				Status:    0,
+				CreatedAt: time.Now(),
 			})
 			if err == nil {
 				ResponseOK(ctx, res)
@@ -232,7 +235,7 @@ func (s *Server) VerifyRegisterAuction(ctx *gin.Context) {
 	ResponseOK(ctx, nil)
 }
 
-func (s *Server) ListRegisterAuction(ctx *gin.Context) {
+func (s *Server) ListRegisterAuctionOfUser(ctx *gin.Context) {
 	uid := s.GetUserId(ctx)
 	var req Request
 	if err := ctx.ShouldBindJSON(&req); err != nil {
@@ -286,13 +289,25 @@ func (s *Server) GetAuctionStatus(ctx *gin.Context) {
 		UserID:    uid,
 		AuctionID: int32(aid),
 	})
-	status := -1
+	status := -2
 
 	if err == nil {
 		status = int(auction.Verify)
 	}
 	ResponseOK(ctx, status)
 }
+func (s *Server) GetAuctionPayCode(ctx *gin.Context) {
+	aid, _ := strconv.Atoi(ctx.Query("id"))
+	uid := s.GetUserId(ctx)
+	user, err := s.store.GetById(ctx, uid)
+	if err == nil {
+		payCode := paycode.NewFromAuctionID(user.UserName, aid)
+		ResponseOK(ctx, payCode)
+		return
+	}
+	ResponseOK(ctx, nil)
+}
+
 func (s *Server) GetMaxBidAuction(ctx *gin.Context) {
 	aid, _ := strconv.Atoi(ctx.Query("id"))
 	uid := s.GetUserId(ctx)
@@ -300,12 +315,8 @@ func (s *Server) GetMaxBidAuction(ctx *gin.Context) {
 		UserID:    uid,
 		AuctionID: int32(aid),
 	})
-	if err != nil {
+	if err != nil || auction.Verify <= 0 {
 		logrus.Error(err)
-		ResponseErrMsg(ctx, nil, "User have not permission", -1)
-		return
-	}
-	if auction.Verify <= 0 {
 		ResponseErrMsg(ctx, nil, "User have not permission", -1)
 		return
 	}
@@ -315,4 +326,96 @@ func (s *Server) GetMaxBidAuction(ctx *gin.Context) {
 		return
 	}
 	ResponseOK(ctx, auction.StartPrice)
+}
+
+func (s *Server) checkPermission(ctx *gin.Context, uid, aid int) bool {
+	auction, err := s.store.GetRegisterAuctionByUserId(ctx, db.GetRegisterAuctionByUserIdParams{
+		UserID:    int32(uid),
+		AuctionID: int32(aid),
+	})
+	if err != nil || auction.Verify <= 0 {
+		logrus.Error(err)
+		return false
+	}
+	return true
+}
+
+type RespUsersRegisterAuction struct {
+	Total int64                                 `json:"total"`
+	Users []db.GetAllListUserRegisterAuctionRow `json:"users"`
+}
+type RespUsersRegisterAuctionByStatus struct {
+	Total int64                                      `json:"total"`
+	Users []db.GetListUserRegisterAuctionByStatusRow `json:"users"`
+}
+
+func (s *Server) GetListUserRegisterAuction(ctx *gin.Context) {
+	var req Request
+	if err := ctx.ShouldBindJSON(&req); err != nil {
+		ResponseErr(ctx, err, 1)
+		return
+	}
+	uid := s.GetUserId(ctx)
+	status := 1
+	flag := true
+	roleId := s.GetRoleId(ctx)
+	if roleId < 3 {
+		status = req.Status
+	} else {
+		flag = s.checkPermission(ctx, int(uid), int(req.AuctionId))
+	}
+	if flag == false {
+		ResponseErrMsg(ctx, nil, "User have not permission", -1)
+		return
+	}
+	page := req.Page
+	if page == 0 {
+		page = 1
+	}
+	size := req.Size
+	if size == 0 {
+		size = 10
+	}
+	limit := size
+	offset := limit * (page - 1)
+	if status == 2 {
+		users, err := s.store.GetAllListUserRegisterAuction(ctx, db.GetAllListUserRegisterAuctionParams{
+			AuctionID: req.AuctionId,
+			Offset:    offset,
+			Limit:     limit,
+		})
+		count, err := s.store.GetTotalUserRegisterAuction(ctx, req.AuctionId)
+
+		if err == nil {
+			resp := RespUsersRegisterAuction{
+				Users: users,
+				Total: count,
+			}
+			ResponseOK(ctx, resp)
+			return
+		}
+		logrus.Error(err)
+	} else {
+		users, err := s.store.GetListUserRegisterAuctionByStatus(ctx, db.GetListUserRegisterAuctionByStatusParams{
+			AuctionID: req.AuctionId,
+			Offset:    offset,
+			Limit:     limit,
+			Status:    int32(status),
+		})
+		count, err := s.store.GetTotalUserRegisterAuctionByStatus(ctx, db.GetTotalUserRegisterAuctionByStatusParams{
+			AuctionID: req.AuctionId,
+			Status:    int32(status),
+		})
+
+		if err == nil {
+			resp := RespUsersRegisterAuctionByStatus{
+				Users: users,
+				Total: count,
+			}
+			ResponseOK(ctx, resp)
+			return
+		}
+		logrus.Error(err)
+	}
+	ResponseOK(ctx, nil)
 }

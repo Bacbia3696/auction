@@ -64,11 +64,15 @@ func (server *Server) setupRouter() {
 
 		authRoutes.POST("/user/change-password", server.ChangePassword)
 		authRoutes.POST("/user/register-auction", server.RegisterAuction)
-		authRoutes.POST("/user/list/register-auction", server.ListRegisterAuction)
+		authRoutes.POST("/user/list/register-auction", server.ListRegisterAuctionOfUser)
 		authRoutes.POST("/user/auction/bid", server.DoBid)
 		authRoutes.GET("/user/info", server.GetUserInfo)
 		authRoutes.GET("/user/auction/status", server.GetAuctionStatus)
 		authRoutes.GET("/auction/max-price", server.GetMaxBidAuction)
+		authRoutes.POST("/auction/user-register", server.GetListUserRegisterAuction)
+		authRoutes.GET("/auction/pay-code", server.GetAuctionPayCode)
+
+
 
 	}
 	server.router = router

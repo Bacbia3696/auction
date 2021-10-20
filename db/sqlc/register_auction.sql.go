@@ -58,7 +58,7 @@ func (q *Queries) CreateRegisterAuction(ctx context.Context, arg CreateRegisterA
 }
 
 const getListRegisterAuction = `-- name: GetListRegisterAuction :many
-SELECT u.id, u.user_name, u.password, u.full_name, u.email, u.address, u.phone, u.birthdate, u.id_card, u.id_card_address, u.id_card_date, u.bank_id, u.bank_owner, u.bank_name, u.status, u.organization_name, u.organization_id, u.organization_date, u.organization_address, u.position, u.created_at, u.updated_at FROM register_auction as ra INNER JOIN users as u ON ra.user_id = u.id
+SELECT u.id, u.user_name, u.password, u.full_name, u.email, u.address, u.phone, u.birthdate, u.id_card, u.id_card_address, u.id_card_date, u.bank_id, u.bank_owner, u.bank_name, u.status, u.organization_name, u.organization_id, u.organization_date, u.organization_address, u.tax_id, u.position, u.created_at, u.updated_at FROM register_auction as ra INNER JOIN users as u ON ra.user_id = u.id
 WHERE  ra.auction_id = $1
 ORDER BY id ASC LIMIT $3 OFFSET $2
 `
@@ -98,6 +98,7 @@ func (q *Queries) GetListRegisterAuction(ctx context.Context, arg GetListRegiste
 			&i.OrganizationID,
 			&i.OrganizationDate,
 			&i.OrganizationAddress,
+			&i.TaxID,
 			&i.Position,
 			&i.CreatedAt,
 			&i.UpdatedAt,
