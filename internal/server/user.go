@@ -245,7 +245,7 @@ func (s *Server) loginUser(ctx *gin.Context) (interface{}, *ServerError) {
 		}
 		return token, nil
 	}
-	return nil, ErrUserUnauthorized
+	return nil, ErrInvalidLogin
 }
 
 type ChangePassword struct {
