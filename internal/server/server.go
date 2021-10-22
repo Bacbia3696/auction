@@ -71,6 +71,7 @@ func (server *Server) setupRouter() {
 		authRoutes.GET("/auction/max-price", server.GetMaxBidAuction)
 		authRoutes.POST("/auction/user-register", server.GetListUserRegisterAuction)
 		authRoutes.GET("/auction/pay-code", server.GetAuctionPayCode)
+		authRoutes.POST("/auction/user-bid", server.GetListUserBiAuction)
 
 
 

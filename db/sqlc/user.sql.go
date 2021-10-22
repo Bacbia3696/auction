@@ -125,6 +125,63 @@ func (q *Queries) CreateUser(ctx context.Context, arg CreateUserParams) (User, e
 	return i, err
 }
 
+const getAllListUserBidAuction = `-- name: GetAllListUserBidAuction :many
+SELECT u.user_name, u.full_name, u.phone, u.email, u.id_card, u.bank_id, b.price, b.created_at
+FROM bid as b
+         INNER JOIN users as u ON b.user_id = u.id
+WHERE b.auction_id = $1
+ORDER BY b.id DESC  LIMIT $3 OFFSET $2
+`
+
+type GetAllListUserBidAuctionParams struct {
+	AuctionID int32 `json:"auction_id"`
+	Offset    int32 `json:"offset"`
+	Limit     int32 `json:"limit"`
+}
+
+type GetAllListUserBidAuctionRow struct {
+	UserName  string    `json:"user_name"`
+	FullName  string    `json:"full_name"`
+	Phone     string    `json:"phone"`
+	Email     string    `json:"email"`
+	IDCard    string    `json:"id_card"`
+	BankID    string    `json:"bank_id"`
+	Price     int32     `json:"price"`
+	CreatedAt time.Time `json:"created_at"`
+}
+
+func (q *Queries) GetAllListUserBidAuction(ctx context.Context, arg GetAllListUserBidAuctionParams) ([]GetAllListUserBidAuctionRow, error) {
+	rows, err := q.db.QueryContext(ctx, getAllListUserBidAuction, arg.AuctionID, arg.Offset, arg.Limit)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []GetAllListUserBidAuctionRow{}
+	for rows.Next() {
+		var i GetAllListUserBidAuctionRow
+		if err := rows.Scan(
+			&i.UserName,
+			&i.FullName,
+			&i.Phone,
+			&i.Email,
+			&i.IDCard,
+			&i.BankID,
+			&i.Price,
+			&i.CreatedAt,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const getAllListUserRegisterAuction = `-- name: GetAllListUserRegisterAuction :many
 SELECT u.user_name, u.full_name, u.phone, u.email, u.id_card, u.bank_id, ra.created_at, ra.status as verify
 FROM register_auction as ra
@@ -478,6 +535,20 @@ func (q *Queries) GetListUserRegisterAuctionByStatus(ctx context.Context, arg Ge
 		return nil, err
 	}
 	return items, nil
+}
+
+const getTotalListUserBidAuction = `-- name: GetTotalListUserBidAuction :one
+SELECT  COUNT(*)
+FROM bid as b
+         INNER JOIN users as u ON b.user_id = u.id
+WHERE b.auction_id = $1
+`
+
+func (q *Queries) GetTotalListUserBidAuction(ctx context.Context, auctionID int32) (int64, error) {
+	row := q.db.QueryRowContext(ctx, getTotalListUserBidAuction, auctionID)
+	var count int64
+	err := row.Scan(&count)
+	return count, err
 }
 
 const getTotalUser = `-- name: GetTotalUser :one

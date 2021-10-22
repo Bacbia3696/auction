@@ -374,7 +374,7 @@ func (s *Server) GetListUserRegisterAuction(ctx *gin.Context) {
 	}
 	size := req.Size
 	if size == 0 {
-		size = 10
+		size = 1000
 	}
 	limit := size
 	offset := limit * (page - 1)
@@ -417,5 +417,54 @@ func (s *Server) GetListUserRegisterAuction(ctx *gin.Context) {
 		}
 		logrus.Error(err)
 	}
+	ResponseOK(ctx, nil)
+}
+type RespUsersBidAuction struct {
+	Total int64                                 `json:"total"`
+	Users []db.GetAllListUserBidAuctionRow `json:"users"`
+}
+
+func (s *Server) GetListUserBiAuction(ctx *gin.Context) {
+	var req Request
+	if err := ctx.ShouldBindJSON(&req); err != nil {
+		ResponseErr(ctx, err, 1)
+		return
+	}
+	uid := s.GetUserId(ctx)
+	flag := true
+	roleId := s.GetRoleId(ctx)
+	if roleId >= 3 {
+		flag = s.checkPermission(ctx, int(uid), int(req.AuctionId))
+	}
+	if flag == false {
+		ResponseErrMsg(ctx, nil, "User have not permission", -1)
+		return
+	}
+	page := req.Page
+	if page == 0 {
+		page = 1
+	}
+	size := req.Size
+	if size == 0 {
+		size = 1000
+	}
+	limit := size
+	offset := limit * (page - 1)
+	users, err := s.store.GetAllListUserBidAuction(ctx, db.GetAllListUserBidAuctionParams{
+		AuctionID: req.AuctionId,
+		Offset:    offset,
+		Limit:     limit,
+	})
+	count, err := s.store.GetTotalListUserBidAuction(ctx, req.AuctionId)
+
+	if err == nil {
+		resp := RespUsersBidAuction{
+			Users: users,
+			Total: count,
+		}
+		ResponseOK(ctx, resp)
+		return
+	}
+	logrus.Error(err)
 	ResponseOK(ctx, nil)
 }

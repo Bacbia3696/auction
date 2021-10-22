@@ -115,3 +115,16 @@ FROM register_auction as ra
          INNER JOIN auctions as au ON ra.auction_id = au.id
          INNER JOIN users as u ON ra.user_id = u.id
 WHERE ra.auction_id = $1 AND ra.status =$2;
+
+-- name: GetAllListUserBidAuction :many
+SELECT u.user_name, u.full_name, u.phone, u.email, u.id_card, u.bank_id, b.price, b.created_at
+FROM bid as b
+         INNER JOIN users as u ON b.user_id = u.id
+WHERE b.auction_id = $1
+ORDER BY b.id DESC  LIMIT $3 OFFSET $2;
+
+-- name: GetTotalListUserBidAuction :one
+SELECT  COUNT(*)
+FROM bid as b
+         INNER JOIN users as u ON b.user_id = u.id
+WHERE b.auction_id = $1;
