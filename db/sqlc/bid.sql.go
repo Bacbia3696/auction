@@ -5,7 +5,6 @@ package db
 
 import (
 	"context"
-	"time"
 )
 
 const createBid = `-- name: CreateBid :one
@@ -13,29 +12,23 @@ INSERT INTO bid (
     auction_id,
     user_id,
     price,
-    status,
-    updated_at,
-    created_at
+    status
 )
 VALUES (
        $1,
        $2,
        $3,
-       $4,
-       $5,
-       $6
+       $4
     )
     RETURNING
     id, auction_id, user_id, price, status, updated_at, created_at
 `
 
 type CreateBidParams struct {
-	AuctionID int32     `json:"auction_id"`
-	UserID    int32     `json:"user_id"`
-	Price     int32     `json:"price"`
-	Status    int32     `json:"status"`
-	UpdatedAt time.Time `json:"updated_at"`
-	CreatedAt time.Time `json:"created_at"`
+	AuctionID int32 `json:"auction_id"`
+	UserID    int32 `json:"user_id"`
+	Price     int32 `json:"price"`
+	Status    int32 `json:"status"`
 }
 
 // query.sql
@@ -45,8 +38,6 @@ func (q *Queries) CreateBid(ctx context.Context, arg CreateBidParams) (Bid, erro
 		arg.UserID,
 		arg.Price,
 		arg.Status,
-		arg.UpdatedAt,
-		arg.CreatedAt,
 	)
 	var i Bid
 	err := row.Scan(

@@ -3,16 +3,12 @@
 INSERT INTO register_auction (
     auction_id,
     user_id,
-    status,
-    updated_at,
-    created_at
+    status
 )
 VALUES (
        $1,
        $2,
-       $3,
-       $4,
-       $5
+       $3
        )
     RETURNING
     *;

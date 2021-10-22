@@ -197,7 +197,6 @@ func (s *Server) RegisterAuction(ctx *gin.Context) {
 				AuctionID: int32(auctionId),
 				UserID:    userId,
 				Status:    0,
-				CreatedAt: time.Now(),
 			})
 			if err == nil {
 				ResponseOK(ctx, res)

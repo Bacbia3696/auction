@@ -13,38 +13,26 @@ const createRegisterAuction = `-- name: CreateRegisterAuction :one
 INSERT INTO register_auction (
     auction_id,
     user_id,
-    status,
-    updated_at,
-    created_at
+    status
 )
 VALUES (
        $1,
        $2,
-       $3,
-       $4,
-       $5
+       $3
        )
     RETURNING
     id, auction_id, user_id, status, updated_at, created_at
 `
 
 type CreateRegisterAuctionParams struct {
-	AuctionID int32        `json:"auction_id"`
-	UserID    int32        `json:"user_id"`
-	Status    int32        `json:"status"`
-	UpdatedAt sql.NullTime `json:"updated_at"`
-	CreatedAt time.Time    `json:"created_at"`
+	AuctionID int32 `json:"auction_id"`
+	UserID    int32 `json:"user_id"`
+	Status    int32 `json:"status"`
 }
 
 // query.sql
 func (q *Queries) CreateRegisterAuction(ctx context.Context, arg CreateRegisterAuctionParams) (RegisterAuction, error) {
-	row := q.db.QueryRowContext(ctx, createRegisterAuction,
-		arg.AuctionID,
-		arg.UserID,
-		arg.Status,
-		arg.UpdatedAt,
-		arg.CreatedAt,
-	)
+	row := q.db.QueryRowContext(ctx, createRegisterAuction, arg.AuctionID, arg.UserID, arg.Status)
 	var i RegisterAuction
 	err := row.Scan(
 		&i.ID,

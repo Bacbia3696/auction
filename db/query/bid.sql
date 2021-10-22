@@ -4,17 +4,13 @@ INSERT INTO bid (
     auction_id,
     user_id,
     price,
-    status,
-    updated_at,
-    created_at
+    status
 )
 VALUES (
        $1,
        $2,
        $3,
-       $4,
-       $5,
-       $6
+       $4
     )
     RETURNING
     *;
