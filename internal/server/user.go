@@ -211,37 +211,36 @@ func (s *Server) handleSaveImage(ctx *gin.Context, images []*multipart.FileHeade
 }
 
 func (s *Server) LoginUser(ctx *gin.Context) {
+	res, err := s.loginUser(ctx)
+	SendResponse(ctx, res, err)
+}
+
+func (s *Server) loginUser(ctx *gin.Context) (interface{}, *ServerError) {
 	var req UserLogin
-	if err := ctx.ShouldBindJSON(&req); err != nil {
-		ctx.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
-		return
-	} else {
-		user, err := s.store.GetByUserName(ctx, req.UserName)
-		if err == nil {
-			if (db.User{}) == user {
-				ResponseErrMsg(ctx, nil, "User not exists ", 1)
-				return
-			}
-			if user.Status < 0 {
-				ResponseErrMsg(ctx, nil, "User blocked ", 1)
-				return
-			}
-			if CheckPasswordHash(req.Password, user.Password) {
-				token, err := token.GenToken(user)
-				if err != nil {
-					logrus.Infoln("error GenToken", err)
-					ResponseErr(ctx, err, http.StatusInternalServerError)
-					return
-				}
-				ResponseOK(ctx, token)
-			} else {
-				ResponseErrMsg(ctx, nil, "Unauthorized", 401)
-			}
-		} else {
-			logrus.Error(err)
-			ResponseErrMsg(ctx, nil, "Unauthorized", 401)
-		}
+	err := ctx.ShouldBindJSON(&req)
+	if err != nil {
+		return nil, ErrInvalidRequest.WithCustomMessage(err.Error())
 	}
+	user, err := s.store.GetByUserName(ctx, req.UserName)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return nil, ErrInvalidLogin
+		}
+		logrus.WithField("username", req.UserName).Error(err)
+		return nil, ErrGeneric
+	}
+	if user.Status < 0 {
+		return nil, ErrUserBlock
+	}
+	if CheckPasswordHash(req.Password, user.Password) {
+		token, err := token.GenToken(user)
+		if err != nil {
+			logrus.WithField("username", req.UserName).Error(err)
+			return nil, ErrGeneric
+		}
+		return token, nil
+	}
+	return nil, ErrInvalidLogin
 }
 
 type ChangePassword struct {
