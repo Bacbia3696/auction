@@ -37,7 +37,6 @@ type createUserRequest struct {
 	OrganizationId      string                  `form:"organizationId"`
 	OrganizationDate    string                  `form:"organizationDate"`
 	OrganizationAddress string                  `form:"organizationAddress"`
-	TaxId               string                  `form:"taxId"`
 	Images              []*multipart.FileHeader `form:"images" binding:"required"`
 	FrontImage          multipart.FileHeader    `form:"frontImage" binding:"required"`
 	BackImage           multipart.FileHeader    `form:"backImage" binding:"required"`
@@ -77,7 +76,7 @@ func (s *Server) RegisterUser(ctx *gin.Context) {
 	}
 	// organization
 	if req.RoleId == 4 {
-		if govalidator.IsNull(req.OrganizationName) || govalidator.IsNull(req.OrganizationId) || govalidator.IsNull(req.OrganizationAddress) || govalidator.IsNull(req.TaxId) {
+		if govalidator.IsNull(req.OrganizationName) || govalidator.IsNull(req.OrganizationId) || govalidator.IsNull(req.OrganizationAddress){
 			ResponseErrMsg(ctx, nil, "Input invalid", 1)
 			return
 		}
@@ -134,10 +133,6 @@ func (s *Server) RegisterUser(ctx *gin.Context) {
 		}
 		params.OrganizationAddress = sql.NullString{
 			String: req.OrganizationAddress,
-			Valid:  true,
-		}
-		params.TaxID = sql.NullString{
-			String: req.TaxId,
 			Valid:  true,
 		}
 	}

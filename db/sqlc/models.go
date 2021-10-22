@@ -84,7 +84,6 @@ type User struct {
 	OrganizationID      sql.NullString `json:"organization_id"`
 	OrganizationDate    sql.NullTime   `json:"organization_date"`
 	OrganizationAddress sql.NullString `json:"organization_address"`
-	TaxID               sql.NullString `json:"tax_id"`
 	Position            sql.NullString `json:"position"`
 	CreatedAt           time.Time      `json:"created_at"`
 	UpdatedAt           sql.NullTime   `json:"updated_at"`
