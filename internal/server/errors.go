@@ -7,8 +7,9 @@ import (
 )
 
 type ServerError struct {
-	code int
-	msg  string
+	code   int
+	msg    string
+	devMsg string
 }
 
 func NewError(code int, msg string) *ServerError {
@@ -26,10 +27,11 @@ func (e *ServerError) Code() int {
 	return e.code
 }
 
-func (e *ServerError) WithCustomMessage(msg string) *ServerError {
+func (e *ServerError) WithDevMsg(m string) *ServerError {
 	return &ServerError{
-		code: e.code,
-		msg:  msg,
+		code:   e.code,
+		msg:    e.msg,
+		devMsg: m,
 	}
 }
 

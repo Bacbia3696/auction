@@ -219,7 +219,7 @@ func (s *Server) loginUser(ctx *gin.Context) (interface{}, *ServerError) {
 	var req UserLogin
 	err := ctx.ShouldBindJSON(&req)
 	if err != nil {
-		return nil, ErrInvalidRequest.WithCustomMessage(err.Error())
+		return nil, ErrInvalidRequest.WithDevMsg(err.Error())
 	}
 	user, err := s.store.GetByUserName(ctx, req.UserName)
 	if err != nil {
