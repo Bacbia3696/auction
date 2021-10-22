@@ -68,7 +68,7 @@ func (s *Server) DoBid(ctx *gin.Context) {
 		Status:    0,
 	})
 	if err == nil {
-		broadcast(int(bid.ID))
+		broadcast(int(req.AuctionId))
 		ResponseOK(ctx, bid)
 		return
 	}
