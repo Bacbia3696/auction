@@ -1,12 +1,13 @@
 package server
 
 import (
+	"net/http"
+	"strconv"
+
 	db "github.com/bacbia3696/auction/db/sqlc"
 	"github.com/bacbia3696/auction/internal/token"
 	"github.com/gin-gonic/gin"
 	"github.com/sirupsen/logrus"
-	"net/http"
-	"strconv"
 )
 
 const (
@@ -27,11 +28,11 @@ func (s *Server) GetUserId(ctx *gin.Context) int32 {
 }
 
 type Request struct {
-	Keyword string `json:"keyword"`
-	Status  int `json:"status"`
-	Page    int32  `json:"page"`
-	AuctionId    int32  `json:"auctionId"`
-	Size    int32  `json:"size"`
+	Keyword   string `json:"keyword"`
+	Status    int    `json:"status"`
+	Page      int32  `json:"page"`
+	AuctionId int32  `json:"auctionId"`
+	Size      int32  `json:"size"`
 }
 
 type RespUsers struct {

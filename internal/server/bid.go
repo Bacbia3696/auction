@@ -1,11 +1,12 @@
 package server
 
 import (
+	"net/http"
+	"time"
+
 	db "github.com/bacbia3696/auction/db/sqlc"
 	"github.com/gin-gonic/gin"
 	"github.com/sirupsen/logrus"
-	"net/http"
-	"time"
 )
 
 type BidInfoRequest struct {
@@ -67,6 +68,7 @@ func (s *Server) DoBid(ctx *gin.Context) {
 		Status:    0,
 	})
 	if err == nil {
+		broadcast(int(bid.ID))
 		ResponseOK(ctx, bid)
 		return
 	}
