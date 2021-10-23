@@ -121,7 +121,7 @@ SELECT u.user_name, u.full_name, u.phone, u.email, u.id_card, u.bank_id, b.price
 FROM bid as b
          INNER JOIN users as u ON b.user_id = u.id
 WHERE b.auction_id = $1
-ORDER BY b.id DESC  LIMIT $3 OFFSET $2;
+ORDER BY b.price DESC  LIMIT $3 OFFSET $2;
 
 -- name: GetTotalListUserBidAuction :one
 SELECT  COUNT(*)
