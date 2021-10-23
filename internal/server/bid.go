@@ -74,7 +74,7 @@ func (s *Server) DoBid(ctx *gin.Context) {
 		Status:    0,
 	})
 	if err == nil {
-		bid, _ := s.store.GetLiveUserBidAuction(ctx, db.GetLiveUserBidAuctionParams{
+		userBid, _ := s.store.GetLiveUserBidAuction(ctx, db.GetLiveUserBidAuctionParams{
 			AuctionID: req.AuctionId,
 			ID:        bid.ID,
 		})
@@ -82,7 +82,7 @@ func (s *Server) DoBid(ctx *gin.Context) {
 		resp := RespBidMsg{
 			AuctionId: req.AuctionId,
 			Price:     maxPrice,
-			Bid:       bid,
+			Bid:       userBid,
 		}
 		broadcast(resp)
 		ResponseOK(ctx, bid)
