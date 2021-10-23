@@ -1,9 +1,9 @@
 package server
 
 import (
+	"encoding/json"
 	"net/http"
 	"sync"
-	"encoding/json"
 
 	"github.com/gin-gonic/gin"
 	"github.com/gorilla/websocket"
@@ -79,14 +79,16 @@ func handleWs(conn *websocket.Conn) {
 	}
 }
 
-func broadcast(msg RespBidMsg ) {
+func broadcast(msg RespBidMsg) {
 	auctionId := msg.AuctionId
 	for _, conn := range clients[int(auctionId)] {
 		out, _ := json.Marshal(msg)
 		err := conn.WriteMessage(websocket.TextMessage, out)
 		if err != nil {
+			lock.Lock()
 			remove(clients[int(auctionId)], conn)
 			conn.Close()
+			lock.Unlock()
 		}
 	}
 }
