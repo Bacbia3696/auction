@@ -3,6 +3,7 @@ package server
 import (
 	"net/http"
 	"sync"
+	"encoding/json"
 
 	"github.com/gin-gonic/gin"
 	"github.com/gorilla/websocket"
@@ -57,9 +58,9 @@ func handleWs(conn *websocket.Conn) {
 			remove(clients[auctionId], conn)
 			conn.Close()
 			return
-		case "bid":
-			logrus.Info("bid")
-			broadcast(auctionId)
+		//case "bid":
+		//	logrus.Info("bid")
+		//	broadcast(auctionId)
 		default:
 			logrus.Infoln("invalid ws action:", msg.Action)
 			err = conn.WriteMessage(websocket.TextMessage, []byte("invalid ws action"))
@@ -72,11 +73,13 @@ func handleWs(conn *websocket.Conn) {
 	}
 }
 
-func broadcast(auctionId int) {
-	for _, conn := range clients[auctionId] {
-		err := conn.WriteMessage(websocket.TextMessage, []byte("update"))
+func broadcast(msg RespBidMsg ) {
+	auctionId := msg.AuctionId
+	for _, conn := range clients[int(auctionId)] {
+		out, _ := json.Marshal(msg)
+		err := conn.WriteMessage(websocket.TextMessage, out)
 		if err != nil {
-			remove(clients[auctionId], conn)
+			remove(clients[int(auctionId)], conn)
 			conn.Close()
 		}
 	}

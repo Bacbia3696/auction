@@ -14,6 +14,12 @@ type BidInfoRequest struct {
 	Price     int64 `json:"price" binding:"required"`
 }
 
+type RespBidMsg struct {
+	AuctionId int32                       `json:"auctionId" binding:"required"`
+	Price     interface{}                 `json:"price" binding:"required"`
+	Bid       db.GetLiveUserBidAuctionRow `json:"bid" binding:"required"`
+}
+
 func (s *Server) DoBid(ctx *gin.Context) {
 	var req BidInfoRequest
 	if err := ctx.ShouldBindJSON(&req); err != nil {
@@ -68,7 +74,17 @@ func (s *Server) DoBid(ctx *gin.Context) {
 		Status:    0,
 	})
 	if err == nil {
-		broadcast(int(req.AuctionId))
+		bid, _ := s.store.GetLiveUserBidAuction(ctx, db.GetLiveUserBidAuctionParams{
+			AuctionID: req.AuctionId,
+			ID:        bid.ID,
+		})
+		maxPrice, _ := s.store.GetMaxBid(ctx, req.AuctionId)
+		resp := RespBidMsg{
+			AuctionId: req.AuctionId,
+			Price:     maxPrice,
+			Bid:       bid,
+		}
+		broadcast(resp)
 		ResponseOK(ctx, bid)
 		return
 	}

@@ -29,6 +29,7 @@ type Querier interface {
 	GetListRegisterAuctionByUserId(ctx context.Context, arg GetListRegisterAuctionByUserIdParams) ([]GetListRegisterAuctionByUserIdRow, error)
 	GetListUser(ctx context.Context, arg GetListUserParams) ([]User, error)
 	GetListUserRegisterAuctionByStatus(ctx context.Context, arg GetListUserRegisterAuctionByStatusParams) ([]GetListUserRegisterAuctionByStatusRow, error)
+	GetLiveUserBidAuction(ctx context.Context, arg GetLiveUserBidAuctionParams) (GetLiveUserBidAuctionRow, error)
 	GetMaxBid(ctx context.Context, auctionID int32) (interface{}, error)
 	GetRegisterAuctionById(ctx context.Context, id int32) (RegisterAuction, error)
 	GetRegisterAuctionByUserId(ctx context.Context, arg GetRegisterAuctionByUserIdParams) (GetRegisterAuctionByUserIdRow, error)
