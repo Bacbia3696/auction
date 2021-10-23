@@ -87,9 +87,9 @@ type wsMessage struct {
 }
 
 func remove(arr []*websocket.Conn, elem *websocket.Conn) {
-	for i, e := range arr {
-		if e == elem {
-			arr = append(arr[:i], arr[i+1:]...)
-		}
-	}
+	// for i, e := range arr {
+	// 	if e == elem {
+	// 		arr = append(arr[:i], arr[i+1:]...)
+	// 	}
+	// }
 }
