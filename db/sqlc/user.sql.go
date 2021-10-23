@@ -126,7 +126,7 @@ func (q *Queries) CreateUser(ctx context.Context, arg CreateUserParams) (User, e
 }
 
 const getAllListUserBidAuction = `-- name: GetAllListUserBidAuction :many
-SELECT u.user_name, u.full_name, u.phone, u.email, u.id_card, u.bank_id, b.price, b.created_at
+SELECT b.id,u.user_name, u.full_name, u.phone, u.email, u.id_card, u.bank_id, b.price, b.created_at
 FROM bid as b
          INNER JOIN users as u ON b.user_id = u.id
 WHERE b.auction_id = $1
@@ -140,6 +140,7 @@ type GetAllListUserBidAuctionParams struct {
 }
 
 type GetAllListUserBidAuctionRow struct {
+	ID        int32     `json:"id"`
 	UserName  string    `json:"user_name"`
 	FullName  string    `json:"full_name"`
 	Phone     string    `json:"phone"`
@@ -160,6 +161,7 @@ func (q *Queries) GetAllListUserBidAuction(ctx context.Context, arg GetAllListUs
 	for rows.Next() {
 		var i GetAllListUserBidAuctionRow
 		if err := rows.Scan(
+			&i.ID,
 			&i.UserName,
 			&i.FullName,
 			&i.Phone,
@@ -538,7 +540,7 @@ func (q *Queries) GetListUserRegisterAuctionByStatus(ctx context.Context, arg Ge
 }
 
 const getLiveUserBidAuction = `-- name: GetLiveUserBidAuction :one
-SELECT u.user_name, u.full_name, u.phone, u.email, u.id_card, u.bank_id, b.price, b.created_at
+SELECT b.id,u.user_name, u.full_name, u.phone, u.email, u.id_card, u.bank_id, b.price, b.created_at
 FROM bid as b
          INNER JOIN users as u ON b.user_id = u.id
 WHERE b.auction_id = $1 AND b.id =$2 LIMIT 1
@@ -550,6 +552,7 @@ type GetLiveUserBidAuctionParams struct {
 }
 
 type GetLiveUserBidAuctionRow struct {
+	ID        int32     `json:"id"`
 	UserName  string    `json:"user_name"`
 	FullName  string    `json:"full_name"`
 	Phone     string    `json:"phone"`
@@ -564,6 +567,7 @@ func (q *Queries) GetLiveUserBidAuction(ctx context.Context, arg GetLiveUserBidA
 	row := q.db.QueryRowContext(ctx, getLiveUserBidAuction, arg.AuctionID, arg.ID)
 	var i GetLiveUserBidAuctionRow
 	err := row.Scan(
+		&i.ID,
 		&i.UserName,
 		&i.FullName,
 		&i.Phone,

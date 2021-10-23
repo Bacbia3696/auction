@@ -117,7 +117,7 @@ FROM register_auction as ra
 WHERE ra.auction_id = $1 AND ra.status =$2;
 
 -- name: GetAllListUserBidAuction :many
-SELECT u.user_name, u.full_name, u.phone, u.email, u.id_card, u.bank_id, b.price, b.created_at
+SELECT b.id,u.user_name, u.full_name, u.phone, u.email, u.id_card, u.bank_id, b.price, b.created_at
 FROM bid as b
          INNER JOIN users as u ON b.user_id = u.id
 WHERE b.auction_id = $1
@@ -130,7 +130,7 @@ FROM bid as b
 WHERE b.auction_id = $1;
 
 -- name: GetLiveUserBidAuction :one
-SELECT u.user_name, u.full_name, u.phone, u.email, u.id_card, u.bank_id, b.price, b.created_at
+SELECT b.id,u.user_name, u.full_name, u.phone, u.email, u.id_card, u.bank_id, b.price, b.created_at
 FROM bid as b
          INNER JOIN users as u ON b.user_id = u.id
 WHERE b.auction_id = $1 AND b.id =$2 LIMIT 1;
