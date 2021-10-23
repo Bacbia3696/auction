@@ -33,21 +33,23 @@ func (s *Server) wsHandlerFunc(ctx *gin.Context) {
 func handleWs(conn *websocket.Conn) {
 	defer conn.Close()
 	msg := &wsMessage{}
+	maxRetry := 10
 	for {
 		err := conn.ReadJSON(msg)
 		if err != nil {
 			logrus.Infoln("error try to read wsMessage:", err)
-			return
+			maxRetry--
+			if maxRetry == 0 {
+				return
+			}
 		}
 		auctionId := msg.AuctionID
 		if auctionId <= 0 {
 			logrus.Infoln("invalid auctionId:", auctionId)
 			err = conn.WriteMessage(websocket.TextMessage, []byte("invalid auctionId")) //nolint:errcheck
 			if err != nil {
-				lock.Lock()
 				remove(clients[auctionId], conn)
 				conn.Close()
-				lock.Unlock()
 				return
 			}
 		}
@@ -57,11 +59,9 @@ func handleWs(conn *websocket.Conn) {
 			clients[auctionId] = append(clients[auctionId], conn)
 			continue
 		case "left":
-			lock.Lock()
 			logrus.Info("left")
 			remove(clients[auctionId], conn)
 			conn.Close()
-			lock.Unlock()
 			return
 		//case "bid":
 		//	logrus.Info("bid")
@@ -70,10 +70,8 @@ func handleWs(conn *websocket.Conn) {
 			logrus.Infoln("invalid ws action:", msg.Action)
 			err = conn.WriteMessage(websocket.TextMessage, []byte("invalid ws action"))
 			if err != nil {
-				lock.Lock()
 				remove(clients[auctionId], conn)
 				conn.Close()
-				lock.Unlock()
 				return
 			}
 		}
@@ -86,10 +84,8 @@ func broadcast(msg RespBidMsg) {
 		out, _ := json.Marshal(msg)
 		err := conn.WriteMessage(websocket.TextMessage, out)
 		if err != nil {
-			lock.Lock()
 			remove(clients[int(auctionId)], conn)
 			conn.Close()
-			lock.Unlock()
 		}
 	}
 }
