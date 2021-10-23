@@ -37,6 +37,7 @@ func handleWs(conn *websocket.Conn) {
 		err := conn.ReadJSON(msg)
 		if err != nil {
 			logrus.Infoln("error try to read wsMessage:", err)
+			return
 		}
 		auctionId := msg.AuctionID
 		if auctionId <= 0 {
