@@ -2,6 +2,7 @@ package server
 
 import (
 	"net/http"
+	"sync"
 
 	"github.com/gin-gonic/gin"
 	"github.com/gorilla/websocket"
@@ -9,6 +10,7 @@ import (
 )
 
 var clients = make(map[int][]*websocket.Conn)
+var lock = sync.Mutex{}
 
 var upgrader = websocket.Upgrader{
 	ReadBufferSize:  4096,
@@ -87,9 +89,11 @@ type wsMessage struct {
 }
 
 func remove(arr []*websocket.Conn, elem *websocket.Conn) {
-	// for i, e := range arr {
-	// 	if e == elem {
-	// 		arr = append(arr[:i], arr[i+1:]...)
-	// 	}
-	// }
+	lock.Lock()
+	defer lock.Unlock()
+	for i, e := range arr {
+		if e == elem {
+			arr = append(arr[:i], arr[i+1:]...)
+		}
+	}
 }
