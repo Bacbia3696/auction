@@ -6,16 +6,16 @@ import (
 	"html"
 	"mime/multipart"
 	"net/http"
+	"path/filepath"
 	"strings"
 	"time"
 
 	"github.com/asaskevich/govalidator"
-	"github.com/sirupsen/logrus"
-	"golang.org/x/crypto/bcrypt"
-
 	db "github.com/bacbia3696/auction/db/sqlc"
 	"github.com/bacbia3696/auction/internal/token"
 	"github.com/gin-gonic/gin"
+	"github.com/sirupsen/logrus"
+	"golang.org/x/crypto/bcrypt"
 )
 
 type createUserRequest struct {
@@ -64,51 +64,47 @@ func Santize(data string) string {
 }
 
 func (s *Server) RegisterUser(ctx *gin.Context) {
+	res, err := s.registerUser(ctx)
+	SendResponse(ctx, res, err)
+}
+
+func (s *Server) registerUser(ctx *gin.Context) (interface{}, *ServerError) {
 	var req createUserRequest
 	if err := ctx.ShouldBind(&req); err != nil {
-		ResponseErr(ctx, err, 1)
-		return
+		logrus.Error(err)
+		return nil, ErrInvalidRequest.WithDevMsg(translateErr(err))
 	}
 	//check roleId
 	if req.RoleId < 2 || req.RoleId > 4 {
-		ResponseErrMsg(ctx, nil, "RoleId invalid", -1)
-		return
+		return nil, ErrInvalidRequest.WithDevMsg("RoleId invalid")
 	}
 	// organization
 	if req.RoleId == 4 {
-		if govalidator.IsNull(req.OrganizationName) || govalidator.IsNull(req.OrganizationId) || govalidator.IsNull(req.OrganizationAddress){
-			ResponseErrMsg(ctx, nil, "Input invalid", 1)
-			return
+		if govalidator.IsNull(req.OrganizationName) || govalidator.IsNull(req.OrganizationId) || govalidator.IsNull(req.OrganizationAddress) {
+			return nil, ErrInvalidRequest.WithDevMsg("Input invalid")
 		}
 	}
 
 	//checkUsername
-	checkUsername, err := s.store.GetByUserName(ctx, req.UserName)
-	if err == nil {
-		if (db.User{}) != checkUsername {
-			ResponseErrMsg(ctx, nil, "Username already exists ", 403)
-			return
+	_, err := s.store.GetByUserName(ctx, req.UserName)
+	if err != nil {
+		if err != sql.ErrNoRows {
+			return nil, ErrGeneric
 		}
+	} else {
+		return nil, ErrUserNameExisted
 	}
-	//checkIdCard
-	checkIdCard, err := s.store.GetByIdCard(ctx, req.IdCard)
-	if err == nil {
-		if (db.User{}) != checkIdCard {
-			ResponseErrMsg(ctx, nil, "IdCard already exists ", 403)
-			return
-		}
-	}
+	//TODO: checkIdCard
 	//checkEmail
-	checkEmail, err := s.store.GetByEmail(ctx, req.Email)
-	if err == nil {
-		if (db.User{}) != checkEmail {
-			ResponseErrMsg(ctx, nil, "Email already exists ", 403)
-			return
+	_, err = s.store.GetByEmail(ctx, req.Email)
+	if err != nil {
+		if err != sql.ErrNoRows {
+			return nil, ErrGeneric
 		}
+	} else {
+		return nil, ErrEmailExisted
 	}
 	// create new user
-	// req.IdCardDate = time.Now()
-	// req.BirthDate = time.Now()
 	params := db.CreateUserParams{
 		Email:   req.Email,
 		Address: req.Address,
@@ -140,74 +136,71 @@ func (s *Server) RegisterUser(ctx *gin.Context) {
 		Time:  req.BirthDate,
 		Valid: true,
 	}
-	user, err := s.store.CreateUser(ctx, params)
-	if err != nil {
-		logrus.Infoln("error create user", err)
-		ResponseErr(ctx, err, http.StatusInternalServerError)
-		return
-	}
-	//add user role
-	userRoleParam := db.CreateUserRoleParams{UserID: user.ID, RoleID: req.RoleId}
-	_, err = s.store.CreateUserRole(ctx, userRoleParam)
-	if err != nil {
-		ResponseErr(ctx, err, 1)
-		return
-	}
-
-	//handle img
+	var user db.User
 	forms, err := ctx.MultipartForm()
 	if err != nil {
 		logrus.Infoln("error parse MultipartForm", err)
-		ResponseErr(ctx, err, http.StatusInternalServerError)
-		return
+		return nil, ErrInvalidRequest.WithDevMsg("cannot parse MultipartForm")
 	}
 	frontImage := forms.File["frontImage"]
-	s.handleSaveImage(ctx, frontImage, user.ID, 1)
 	backImage := forms.File["backImage"]
-	s.handleSaveImage(ctx, backImage, user.ID, 2)
-	if req.RoleId == 4 {
-		businessRegImage := forms.File["businessRegImage"]
-		s.handleSaveImage(ctx, businessRegImage, user.ID, 3)
-	}
+	businessRegImage := forms.File["businessRegImage"]
 	images := forms.File["images"]
-	s.handleSaveImage(ctx, images, user.ID, 4)
+
+	err = s.store.ExecTx(ctx, func(q *db.Queries) (err error) {
+		user, err = q.CreateUser(ctx, params)
+		if err != nil {
+			return
+		}
+		userRoleParam := db.CreateUserRoleParams{UserID: user.ID, RoleID: req.RoleId}
+		_, err = q.CreateUserRole(ctx, userRoleParam)
+		if err != nil {
+			return
+		}
+		err = handleSaveImg(ctx, q, frontImage, user.ID, 1)
+		if err != nil {
+			return err
+		}
+		err = handleSaveImg(ctx, q, backImage, user.ID, 2)
+		if err != nil {
+			return err
+		}
+		err = handleSaveImg(ctx, q, businessRegImage, user.ID, 3)
+		if err != nil {
+			return err
+		}
+		return handleSaveImg(ctx, q, images, user.ID, 4)
+	})
+	if err != nil {
+		logrus.Error(err)
+		return nil, ErrGeneric
+	}
 
 	token, err := token.GenToken(user)
 	if err != nil {
 		logrus.Infoln("error GenToken", err)
-		ResponseErr(ctx, err, http.StatusInternalServerError)
-		return
+		return nil, ErrGeneric
 	}
-	ResponseOK(ctx, token)
+	return token, nil
 }
 
-func (s *Server) handleSaveImage(ctx *gin.Context, images []*multipart.FileHeader, userId int32, typeId int32) {
+func handleSaveImg(ctx *gin.Context, q *db.Queries, images []*multipart.FileHeader, userId int32, typeId int32) error {
 	for i := 0; i < len(images); i++ {
-		logrus.Infoln("images", images[i].Filename)
-		fileNames := strings.Split(images[i].Filename, ".")
-		if len(fileNames) < 2 {
-			logrus.Infoln("file invalid")
-			ResponseErrMsg(ctx, nil, "Images input invalid ", 403)
-			return
-		}
-		fileName := fmt.Sprintf("static/img/%d_%s", userId, RandStringRunes(8)+"."+fileNames[1])
+		fileName := fmt.Sprintf("static/img/%d_%s", userId, RandStringRunes(8)+filepath.Ext(images[i].Filename))
 		err := ctx.SaveUploadedFile(images[i], fileName)
 		if err != nil {
-			logrus.Infoln("error save image", err)
-			ResponseErr(ctx, err, http.StatusInternalServerError)
-			return
+			return err
 		}
-		_, err = s.store.CreateUserImage(ctx, db.CreateUserImageParams{
+		_, err = q.CreateUserImage(ctx, db.CreateUserImageParams{
 			UserID: userId,
 			Url:    fileName,
 			Type:   typeId,
 		})
 		if err != nil {
-			logrus.Infoln("error save user image", err)
-			ResponseErr(ctx, err, http.StatusInternalServerError)
-			return
+			return err
 		}
 	}
+	return nil
 }
 
 func (s *Server) LoginUser(ctx *gin.Context) {

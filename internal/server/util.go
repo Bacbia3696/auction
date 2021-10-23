@@ -2,6 +2,11 @@ package server
 
 import (
 	"fmt"
+	"math/rand"
+	"net/http"
+	"strings"
+	"text/template"
+
 	"github.com/gin-gonic/gin"
 	"github.com/gin-gonic/gin/binding"
 	"github.com/go-playground/locales/en"
@@ -9,10 +14,6 @@ import (
 	"github.com/go-playground/validator/v10"
 	entranslations "github.com/go-playground/validator/v10/translations/en"
 	"github.com/sirupsen/logrus"
-	"math/rand"
-	"net/http"
-	"strings"
-	"text/template"
 )
 
 // use a single instance , it caches struct info
@@ -46,20 +47,23 @@ func ResponseOK(ctx *gin.Context, data interface{}) {
 
 func ResponseErr(ctx *gin.Context, err error, code int) {
 	var req gin.H
+	req = gin.H{
+		"code": code,
+		"data": nil,
+		"msg":  translateErr(err),
+	}
+	ctx.JSON(http.StatusOK, req)
+}
+
+func translateErr(err error) string {
 	msg := err.Error()
 	if validatorErrs, ok := err.(validator.ValidationErrors); ok && len(validatorErrs) > 0 {
-		msg = ""
 		for _, e := range validatorErrs {
 			msg += e.Translate(trans) + ", "
 		}
 		msg = msg[:len(msg)-2]
 	}
-	req = gin.H{
-		"code": code,
-		"data": nil,
-		"msg":  msg,
-	}
-	ctx.JSON(http.StatusOK, req)
+	return msg
 }
 
 func ResponseErrMsg(ctx *gin.Context, data interface{}, msg string, code int) {
@@ -69,6 +73,7 @@ func ResponseErrMsg(ctx *gin.Context, data interface{}, msg string, code int) {
 		"msg":  msg,
 	})
 }
+
 var letterRunes = []rune("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ")
 
 func RandStringRunes(n int) string {

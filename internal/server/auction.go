@@ -2,16 +2,17 @@ package server
 
 import (
 	"fmt"
-	db "github.com/bacbia3696/auction/db/sqlc"
-	"github.com/bacbia3696/auction/internal/paycode"
-	"github.com/gin-gonic/gin"
-	"github.com/jinzhu/copier"
-	"github.com/sirupsen/logrus"
 	"mime/multipart"
 	"net/http"
 	"strconv"
 	"strings"
 	"time"
+
+	db "github.com/bacbia3696/auction/db/sqlc"
+	"github.com/bacbia3696/auction/internal/paycode"
+	"github.com/gin-gonic/gin"
+	"github.com/jinzhu/copier"
+	"github.com/sirupsen/logrus"
 )
 
 type CreateAuctionRequest struct {
@@ -418,8 +419,9 @@ func (s *Server) GetListUserRegisterAuction(ctx *gin.Context) {
 	}
 	ResponseOK(ctx, nil)
 }
+
 type RespUsersBidAuction struct {
-	Total int64                                 `json:"total"`
+	Total int64                            `json:"total"`
 	Users []db.GetAllListUserBidAuctionRow `json:"users"`
 }
 
