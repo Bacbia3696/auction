@@ -43,8 +43,10 @@ func handleWs(conn *websocket.Conn) {
 			logrus.Infoln("invalid auctionId:", auctionId)
 			err = conn.WriteMessage(websocket.TextMessage, []byte("invalid auctionId")) //nolint:errcheck
 			if err != nil {
+				lock.Lock()
 				remove(clients[auctionId], conn)
 				conn.Close()
+				lock.Unlock()
 				return
 			}
 		}
@@ -54,9 +56,11 @@ func handleWs(conn *websocket.Conn) {
 			clients[auctionId] = append(clients[auctionId], conn)
 			continue
 		case "left":
+			lock.Lock()
 			logrus.Info("left")
 			remove(clients[auctionId], conn)
 			conn.Close()
+			lock.Unlock()
 			return
 		//case "bid":
 		//	logrus.Info("bid")
@@ -65,8 +69,10 @@ func handleWs(conn *websocket.Conn) {
 			logrus.Infoln("invalid ws action:", msg.Action)
 			err = conn.WriteMessage(websocket.TextMessage, []byte("invalid ws action"))
 			if err != nil {
+				lock.Lock()
 				remove(clients[auctionId], conn)
 				conn.Close()
+				lock.Unlock()
 				return
 			}
 		}
