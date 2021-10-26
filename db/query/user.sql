@@ -134,3 +134,11 @@ SELECT b.id,u.user_name, u.full_name, u.phone, u.email, u.id_card, u.bank_id, b.
 FROM bid as b
          INNER JOIN users as u ON b.user_id = u.id
 WHERE b.auction_id = $1 AND b.id =$2 LIMIT 1;
+
+
+-- name: GetWinnerAuction :one
+SELECT b.id,u.user_name, u.full_name, u.phone, u.email, u.id_card, u.bank_id, b.price, b.created_at
+FROM bid as b
+         INNER JOIN users as u ON b.user_id = u.id
+WHERE b.auction_id = $1
+ORDER BY b.created_at ASC , b.price DESC  LIMIT 1;

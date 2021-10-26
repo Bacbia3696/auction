@@ -63,3 +63,20 @@ func (q *Queries) GetMaxBid(ctx context.Context, auctionID int32) (interface{}, 
 	err := row.Scan(&max)
 	return max, err
 }
+
+const getTotalUserBid = `-- name: GetTotalUserBid :one
+SELECT COUNT(*) FROM bid
+WHERE auction_id = $1 AND user_id=$2
+`
+
+type GetTotalUserBidParams struct {
+	AuctionID int32 `json:"auction_id"`
+	UserID    int32 `json:"user_id"`
+}
+
+func (q *Queries) GetTotalUserBid(ctx context.Context, arg GetTotalUserBidParams) (int64, error) {
+	row := q.db.QueryRowContext(ctx, getTotalUserBid, arg.AuctionID, arg.UserID)
+	var count int64
+	err := row.Scan(&count)
+	return count, err
+}

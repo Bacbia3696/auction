@@ -641,6 +641,43 @@ func (q *Queries) GetTotalUserRegisterAuctionByStatus(ctx context.Context, arg G
 	return count, err
 }
 
+const getWinnerAuction = `-- name: GetWinnerAuction :one
+SELECT b.id,u.user_name, u.full_name, u.phone, u.email, u.id_card, u.bank_id, b.price, b.created_at
+FROM bid as b
+         INNER JOIN users as u ON b.user_id = u.id
+WHERE b.auction_id = $1
+ORDER BY b.created_at ASC , b.price DESC  LIMIT 1
+`
+
+type GetWinnerAuctionRow struct {
+	ID        int32     `json:"id"`
+	UserName  string    `json:"user_name"`
+	FullName  string    `json:"full_name"`
+	Phone     string    `json:"phone"`
+	Email     string    `json:"email"`
+	IDCard    string    `json:"id_card"`
+	BankID    string    `json:"bank_id"`
+	Price     int32     `json:"price"`
+	CreatedAt time.Time `json:"created_at"`
+}
+
+func (q *Queries) GetWinnerAuction(ctx context.Context, auctionID int32) (GetWinnerAuctionRow, error) {
+	row := q.db.QueryRowContext(ctx, getWinnerAuction, auctionID)
+	var i GetWinnerAuctionRow
+	err := row.Scan(
+		&i.ID,
+		&i.UserName,
+		&i.FullName,
+		&i.Phone,
+		&i.Email,
+		&i.IDCard,
+		&i.BankID,
+		&i.Price,
+		&i.CreatedAt,
+	)
+	return i, err
+}
+
 const updatePassword = `-- name: UpdatePassword :one
 UPDATE users
 SET password = $1

@@ -2,6 +2,7 @@ package server
 
 import (
 	"net/http"
+	"strconv"
 	"time"
 
 	db "github.com/bacbia3696/auction/db/sqlc"
@@ -50,6 +51,10 @@ func (s *Server) DoBid(ctx *gin.Context) {
 		return
 	}
 
+	totalBid, err := s.store.GetTotalUserBid(ctx, db.GetTotalUserBidParams{
+		AuctionID: req.AuctionId,
+		UserID:    userId,
+	})
 	//check price
 	if req.Price < int64(auction.StartPrice) {
 		logrus.Error("Price bid invalid ")
@@ -58,15 +63,15 @@ func (s *Server) DoBid(ctx *gin.Context) {
 	}
 
 	//check max price
-	//maxPrice, err := s.store.GetMaxBid(ctx, req.AuctionId)
-	//if err == nil && maxPrice != nil {
-	//	if maxPrice.(int64) >= req.Price {
-	//		logrus.Infoln("Max price of auction: " + auction.Code + ": " + strconv.FormatInt(maxPrice.(int64), 10))
-	//		logrus.Error("Price bid invalid ")
-	//		ResponseErrMsg(ctx, err, "Price bid invalid ", -1)
-	//		return
-	//	}
-	//}
+	maxPrice, err := s.store.GetMaxBid(ctx, req.AuctionId)
+	if err == nil && maxPrice != nil && totalBid > 0 {
+		if maxPrice.(int64) >= req.Price {
+			logrus.Infoln("Max price of auction: " + auction.Code + ": " + strconv.FormatInt(maxPrice.(int64), 10))
+			logrus.Error("Price bid invalid ")
+			ResponseErrMsg(ctx, err, "Price bid invalid ", -1)
+			return
+		}
+	}
 	bid, err := s.store.CreateBid(ctx, db.CreateBidParams{
 		UserID:    userId,
 		AuctionID: req.AuctionId,
