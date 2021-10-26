@@ -341,13 +341,12 @@ func (s *Server) GetWinnerAuction(ctx *gin.Context) {
 		return
 	}
 	winner, err := s.store.GetWinnerAuction(ctx, int32(aid))
-	if err == nil  {
+	if err == nil {
 		ResponseOK(ctx, winner)
 		return
 	}
 	ResponseOK(ctx, nil)
 }
-
 
 func (s *Server) checkPermission(ctx *gin.Context, uid, aid int) bool {
 	auction, err := s.store.GetRegisterAuctionByUserId(ctx, db.GetRegisterAuctionByUserIdParams{
@@ -450,6 +449,12 @@ func (s *Server) GetListUserBiAuction(ctx *gin.Context) {
 	var req Request
 	if err := ctx.ShouldBindJSON(&req); err != nil {
 		ResponseErr(ctx, err, 1)
+		return
+	}
+	auction, _ := s.store.GetAuctionById(ctx, req.AuctionId)
+	if auction.BidEndDate.After(time.Now()) {
+		logrus.Info("Auction have not end")
+		ResponseOK(ctx, nil)
 		return
 	}
 	uid := s.GetUserId(ctx)
