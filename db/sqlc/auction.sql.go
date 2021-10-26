@@ -122,7 +122,7 @@ SELECT id, title, description, code, owner, organization, info, address, registe
 WHERE id = $1 LIMIT 1
 `
 
-func (q *Queries) GetAuctionById(ctx context.Context, id int32) (Auction, error) {
+func (q *Queries) GetAuctionById(ctx context.Context, id int64) (Auction, error) {
 	row := q.db.QueryRowContext(ctx, getAuctionById, id)
 	var i Auction
 	err := row.Scan(
@@ -255,7 +255,7 @@ WHERE  id = $2
 
 type UpdateStatusAuctionParams struct {
 	Status int32 `json:"status"`
-	ID     int32 `json:"id"`
+	ID     int64 `json:"id"`
 }
 
 func (q *Queries) UpdateStatusAuction(ctx context.Context, arg UpdateStatusAuctionParams) (Auction, error) {

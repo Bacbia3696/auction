@@ -1,5 +1,5 @@
 CREATE TABLE users (
-    id serial PRIMARY KEY,
+    id bigserial PRIMARY KEY,
     user_name text NOT NULL,
     password text NOT NULL,
     full_name text NOT NULL,
@@ -25,21 +25,21 @@ CREATE TABLE users (
 );
 
 CREATE TABLE user_images (
-    id serial PRIMARY KEY,
-    user_id int NOT NULL,
+    id bigserial PRIMARY KEY,
+    user_id bigint NOT NULL,
     url text NOT NULL,
     type int NOT NULL
 );
 
 CREATE TABLE ROLE (
-    id serial PRIMARY KEY,
+    id bigserial PRIMARY KEY,
     name text NOT NULL
 );
 
 CREATE TABLE user_role (
-    id serial PRIMARY KEY,
-    user_id int NOT NULL,
-    role_id int NOT NULL,
+    id bigserial PRIMARY KEY,
+    user_id bigint NOT NULL,
+    role_id bigint NOT NULL,
     UNIQUE (user_id)
 );
 
@@ -59,7 +59,7 @@ CREATE TRIGGER update_user_updatetime
     EXECUTE PROCEDURE update_modified_column ();
 
 CREATE TABLE auctions (
-    id serial PRIMARY KEY,
+    id bigserial PRIMARY KEY,
     title text NOT  NULL ,
     description text  NOT  NULL,
     code text NOT NULL,
@@ -81,15 +81,15 @@ CREATE TABLE auctions (
 );
 
 CREATE TABLE auction_images (
-    id serial PRIMARY KEY,
-    auction_id int NOT NULL,
+    id bigserial PRIMARY KEY,
+    auction_id bigint NOT NULL,
     url text NOT NULL
 );
 
 CREATE TABLE register_auction (
-    id serial PRIMARY KEY,
-    auction_id int NOT NULL,
-    user_id int NOT NULL,
+    id bigserial PRIMARY KEY,
+    auction_id bigint NOT NULL,
+    user_id bigint NOT NULL,
     status int NOT NULL,
     updated_at timestamptz,
     created_at timestamptz NOT NULL DEFAULT (now()),
@@ -97,15 +97,15 @@ CREATE TABLE register_auction (
 );
 
 CREATE TABLE register_auction_images (
-    id serial PRIMARY KEY,
-    register_auction_id int NOT NULL,
+    id bigserial PRIMARY KEY,
+    register_auction_id bigint NOT NULL,
     url text NOT NULL
 );
 
 CREATE TABLE bid (
-      id serial PRIMARY KEY,
-      auction_id int NOT NULL,
-      user_id int NOT NULL,
+      id bigserial PRIMARY KEY,
+      auction_id bigint NOT NULL,
+      user_id bigint NOT NULL,
       price int NOT NULL,
       status int NOT NULL,
       updated_at timestamptz NOT NULL DEFAULT (now()),

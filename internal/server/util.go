@@ -55,13 +55,15 @@ func ResponseErr(ctx *gin.Context, err error, code int) {
 	ctx.JSON(http.StatusOK, req)
 }
 
-func translateErr(err error) string {
-	msg := err.Error()
-	if validatorErrs, ok := err.(validator.ValidationErrors); ok && len(validatorErrs) > 0 {
-		for _, e := range validatorErrs {
+func translateErr(err error) (msg string) {
+	switch v := err.(type) {
+	case validator.ValidationErrors:
+		for _, e := range v {
 			msg += e.Translate(trans) + ", "
 		}
-		msg = msg[:len(msg)-2]
+		msg = strings.TrimRight(msg, ", ")
+	default:
+		msg = err.Error()
 	}
 	return msg
 }

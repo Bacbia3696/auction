@@ -22,8 +22,8 @@ VALUES (
 `
 
 type CreateUserRoleParams struct {
-	UserID int32 `json:"user_id"`
-	RoleID int32 `json:"role_id"`
+	UserID int64 `json:"user_id"`
+	RoleID int64 `json:"role_id"`
 }
 
 // query.sql
@@ -39,9 +39,9 @@ SELECT role_id FROM user_role
 WHERE user_id = $1 LIMIT 1
 `
 
-func (q *Queries) GetRoleByUserId(ctx context.Context, userID int32) (int32, error) {
+func (q *Queries) GetRoleByUserId(ctx context.Context, userID int64) (int64, error) {
 	row := q.db.QueryRowContext(ctx, getRoleByUserId, userID)
-	var role_id int32
+	var role_id int64
 	err := row.Scan(&role_id)
 	return role_id, err
 }

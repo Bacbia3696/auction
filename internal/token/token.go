@@ -9,7 +9,7 @@ import (
 
 type Claims struct {
 	Name string `json:"Name"`
-	Id   int32    `json:"Id"`
+	Id   int64    `json:"Id"`
 	jwt.StandardClaims
 }
 var jwtKey = []byte("abcdefghijklmnopq") //config.Get().TokenSignKey

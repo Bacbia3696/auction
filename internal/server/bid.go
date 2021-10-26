@@ -11,12 +11,12 @@ import (
 )
 
 type BidInfoRequest struct {
-	AuctionId int32 `json:"auctionId" binding:"required"`
+	AuctionId int64 `json:"auctionId" binding:"required"`
 	Price     int64 `json:"price" binding:"required"`
 }
 
 type RespBidMsg struct {
-	AuctionId int32                       `json:"auctionId" binding:"required"`
+	AuctionId int64                       `json:"auctionId" binding:"required"`
 	Price     interface{}                 `json:"price" binding:"required"`
 	Bid       db.GetLiveUserBidAuctionRow `json:"bid" binding:"required"`
 }

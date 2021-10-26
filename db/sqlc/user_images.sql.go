@@ -24,7 +24,7 @@ VALUES (
 `
 
 type CreateUserImageParams struct {
-	UserID int32  `json:"user_id"`
+	UserID int64  `json:"user_id"`
 	Url    string `json:"url"`
 	Type   int32  `json:"type"`
 }
@@ -47,7 +47,7 @@ SELECT id, user_id, url, type FROM user_images
 WHERE user_id = $1
 `
 
-func (q *Queries) ListImage(ctx context.Context, userID int32) ([]UserImage, error) {
+func (q *Queries) ListImage(ctx context.Context, userID int64) ([]UserImage, error) {
 	rows, err := q.db.QueryContext(ctx, listImage, userID)
 	if err != nil {
 		return nil, err

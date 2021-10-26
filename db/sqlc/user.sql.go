@@ -134,13 +134,13 @@ ORDER BY b.created_at DESC  LIMIT $3 OFFSET $2
 `
 
 type GetAllListUserBidAuctionParams struct {
-	AuctionID int32 `json:"auction_id"`
+	AuctionID int64 `json:"auction_id"`
 	Offset    int32 `json:"offset"`
 	Limit     int32 `json:"limit"`
 }
 
 type GetAllListUserBidAuctionRow struct {
-	ID        int32     `json:"id"`
+	ID        int64     `json:"id"`
 	UserName  string    `json:"user_name"`
 	FullName  string    `json:"full_name"`
 	Phone     string    `json:"phone"`
@@ -194,7 +194,7 @@ ORDER BY u.id ASC LIMIT $3 OFFSET $2
 `
 
 type GetAllListUserRegisterAuctionParams struct {
-	AuctionID int32 `json:"auction_id"`
+	AuctionID int64 `json:"auction_id"`
 	Offset    int32 `json:"offset"`
 	Limit     int32 `json:"limit"`
 }
@@ -282,7 +282,7 @@ SELECT id, user_name, password, full_name, email, address, phone, birthdate, id_
 WHERE id = $1 LIMIT 1
 `
 
-func (q *Queries) GetById(ctx context.Context, id int32) (User, error) {
+func (q *Queries) GetById(ctx context.Context, id int64) (User, error) {
 	row := q.db.QueryRowContext(ctx, getById, id)
 	var i User
 	err := row.Scan(
@@ -485,7 +485,7 @@ ORDER BY u.id ASC LIMIT $4 OFFSET $3
 `
 
 type GetListUserRegisterAuctionByStatusParams struct {
-	AuctionID int32 `json:"auction_id"`
+	AuctionID int64 `json:"auction_id"`
 	Status    int32 `json:"status"`
 	Offset    int32 `json:"offset"`
 	Limit     int32 `json:"limit"`
@@ -547,12 +547,12 @@ WHERE b.auction_id = $1 AND b.id =$2 LIMIT 1
 `
 
 type GetLiveUserBidAuctionParams struct {
-	AuctionID int32 `json:"auction_id"`
-	ID        int32 `json:"id"`
+	AuctionID int64 `json:"auction_id"`
+	ID        int64 `json:"id"`
 }
 
 type GetLiveUserBidAuctionRow struct {
-	ID        int32     `json:"id"`
+	ID        int64     `json:"id"`
 	UserName  string    `json:"user_name"`
 	FullName  string    `json:"full_name"`
 	Phone     string    `json:"phone"`
@@ -587,7 +587,7 @@ FROM bid as b
 WHERE b.auction_id = $1
 `
 
-func (q *Queries) GetTotalListUserBidAuction(ctx context.Context, auctionID int32) (int64, error) {
+func (q *Queries) GetTotalListUserBidAuction(ctx context.Context, auctionID int64) (int64, error) {
 	row := q.db.QueryRowContext(ctx, getTotalListUserBidAuction, auctionID)
 	var count int64
 	err := row.Scan(&count)
@@ -599,8 +599,8 @@ SELECT COUNT(*) FROM users
 WHERE ( user_name LIKE  $1 OR full_name LIKE  $1 OR organization_name LIKE  $1 OR id_card LIKE  $1 OR organization_id LIKE  $1 OR email  LIKE  $1)
 `
 
-func (q *Queries) GetTotalUser(ctx context.Context, userName string) (int64, error) {
-	row := q.db.QueryRowContext(ctx, getTotalUser, userName)
+func (q *Queries) GetTotalUser(ctx context.Context, keyword string) (int64, error) {
+	row := q.db.QueryRowContext(ctx, getTotalUser, keyword)
 	var count int64
 	err := row.Scan(&count)
 	return count, err
@@ -614,7 +614,7 @@ FROM register_auction as ra
 WHERE ra.auction_id = $1
 `
 
-func (q *Queries) GetTotalUserRegisterAuction(ctx context.Context, auctionID int32) (int64, error) {
+func (q *Queries) GetTotalUserRegisterAuction(ctx context.Context, auctionID int64) (int64, error) {
 	row := q.db.QueryRowContext(ctx, getTotalUserRegisterAuction, auctionID)
 	var count int64
 	err := row.Scan(&count)
@@ -630,7 +630,7 @@ WHERE ra.auction_id = $1 AND ra.status =$2
 `
 
 type GetTotalUserRegisterAuctionByStatusParams struct {
-	AuctionID int32 `json:"auction_id"`
+	AuctionID int64 `json:"auction_id"`
 	Status    int32 `json:"status"`
 }
 
@@ -650,7 +650,7 @@ ORDER BY b.created_at ASC , b.price DESC  LIMIT 1
 `
 
 type GetWinnerAuctionRow struct {
-	ID        int32     `json:"id"`
+	ID        int64     `json:"id"`
 	UserName  string    `json:"user_name"`
 	FullName  string    `json:"full_name"`
 	Phone     string    `json:"phone"`
@@ -661,7 +661,7 @@ type GetWinnerAuctionRow struct {
 	CreatedAt time.Time `json:"created_at"`
 }
 
-func (q *Queries) GetWinnerAuction(ctx context.Context, auctionID int32) (GetWinnerAuctionRow, error) {
+func (q *Queries) GetWinnerAuction(ctx context.Context, auctionID int64) (GetWinnerAuctionRow, error) {
 	row := q.db.QueryRowContext(ctx, getWinnerAuction, auctionID)
 	var i GetWinnerAuctionRow
 	err := row.Scan(
@@ -688,7 +688,7 @@ WHERE  id = $2
 
 type UpdatePasswordParams struct {
 	Password string `json:"password"`
-	ID       int32  `json:"id"`
+	ID       int64  `json:"id"`
 }
 
 func (q *Queries) UpdatePassword(ctx context.Context, arg UpdatePasswordParams) (User, error) {
@@ -731,7 +731,7 @@ WHERE  id = $2
 
 type UpdateStatusParams struct {
 	Status int32 `json:"status"`
-	ID     int32 `json:"id"`
+	ID     int64 `json:"id"`
 }
 
 func (q *Queries) UpdateStatus(ctx context.Context, arg UpdateStatusParams) (User, error) {

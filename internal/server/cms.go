@@ -14,14 +14,14 @@ const (
 	authorizationPayloadKey = "authorization_payload"
 )
 
-func (s *Server) GetRoleId(ctx *gin.Context) int32 {
+func (s *Server) GetRoleId(ctx *gin.Context) int64 {
 	authPayload := ctx.MustGet(authorizationPayloadKey).(*token.Claims)
 	userId := authPayload.Id
 	roleId, _ := s.store.GetRoleByUserId(ctx, userId)
 	return roleId
 }
 
-func (s *Server) GetUserId(ctx *gin.Context) int32 {
+func (s *Server) GetUserId(ctx *gin.Context) int64 {
 	authPayload := ctx.MustGet(authorizationPayloadKey).(*token.Claims)
 	userId := authPayload.Id
 	return userId
@@ -31,7 +31,7 @@ type Request struct {
 	Keyword   string `json:"keyword"`
 	Status    int    `json:"status"`
 	Page      int32  `json:"page"`
-	AuctionId int32  `json:"auctionId"`
+	AuctionId int64  `json:"auctionId"`
 	Size      int32  `json:"size"`
 }
 
@@ -85,12 +85,12 @@ func (s *Server) VerifyUser(ctx *gin.Context) {
 		return
 	}
 	uid, _ := strconv.Atoi(ctx.Query("userId"))
-	checkUser, err := s.store.GetById(ctx, int32(uid))
+	checkUser, err := s.store.GetById(ctx, int64(uid))
 	if err == nil {
 		if (db.User{}) != checkUser {
 			_, _ = s.store.UpdateStatus(ctx, db.UpdateStatusParams{
 				Status: 1,
-				ID:     int32(uid),
+				ID:     int64(uid),
 			})
 		}
 	}
@@ -104,12 +104,12 @@ func (s *Server) LockUser(ctx *gin.Context) {
 		return
 	}
 	uid, _ := strconv.Atoi(ctx.Query("userId"))
-	checkUser, err := s.store.GetById(ctx, int32(uid))
+	checkUser, err := s.store.GetById(ctx, int64(uid))
 	if err == nil {
 		if (db.User{}) != checkUser {
 			_, _ = s.store.UpdateStatus(ctx, db.UpdateStatusParams{
 				Status: -1,
-				ID:     int32(uid),
+				ID:     int64(uid),
 			})
 		}
 	}
@@ -119,7 +119,7 @@ func (s *Server) LockUser(ctx *gin.Context) {
 type UserInfo struct {
 	User   db.User        `json:"user"`
 	Images []db.UserImage `json:"images"`
-	RoleId int32          `json:"roleId"`
+	RoleId int64          `json:"roleId"`
 }
 
 func (s *Server) ViewDetailUser(ctx *gin.Context) {
@@ -129,10 +129,10 @@ func (s *Server) ViewDetailUser(ctx *gin.Context) {
 		return
 	}
 	uid, _ := strconv.Atoi(ctx.Query("id"))
-	user, err := s.store.GetById(ctx, int32(uid))
+	user, err := s.store.GetById(ctx, int64(uid))
 	if err == nil {
-		images, _ := s.store.ListImage(ctx, int32(uid))
-		roleId, _ := s.store.GetRoleByUserId(ctx, int32(uid))
+		images, _ := s.store.ListImage(ctx, int64(uid))
+		roleId, _ := s.store.GetRoleByUserId(ctx, int64(uid))
 		userInfo := UserInfo{
 			User:   user,
 			Images: images,

@@ -22,7 +22,7 @@ VALUES (
 `
 
 type CreateRegisterAuctionImageParams struct {
-	RegisterAuctionID int32  `json:"register_auction_id"`
+	RegisterAuctionID int64  `json:"register_auction_id"`
 	Url               string `json:"url"`
 }
 
@@ -39,7 +39,7 @@ SELECT id, register_auction_id, url FROM register_auction_images
 WHERE register_auction_id = $1
 `
 
-func (q *Queries) ListRegisterAuctionImage(ctx context.Context, registerAuctionID int32) ([]RegisterAuctionImage, error) {
+func (q *Queries) ListRegisterAuctionImage(ctx context.Context, registerAuctionID int64) ([]RegisterAuctionImage, error) {
 	rows, err := q.db.QueryContext(ctx, listRegisterAuctionImage, registerAuctionID)
 	if err != nil {
 		return nil, err

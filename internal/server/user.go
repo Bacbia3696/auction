@@ -19,7 +19,7 @@ import (
 )
 
 type createUserRequest struct {
-	RoleId              int32                   `form:"roleId" binding:"required"`
+	RoleId              int64                   `form:"roleId" binding:"required"`
 	UserName            string                  `form:"userName" binding:"required"`
 	Password            string                  `form:"password" binding:"required,min=6"`
 	FullName            string                  `form:"fullName" binding:"required"`
@@ -184,7 +184,7 @@ func (s *Server) registerUser(ctx *gin.Context) (interface{}, *ServerError) {
 	return token, nil
 }
 
-func handleSaveImg(ctx *gin.Context, q *db.Queries, images []*multipart.FileHeader, userId int32, typeId int32) error {
+func handleSaveImg(ctx *gin.Context, q *db.Queries, images []*multipart.FileHeader, userId int64, typeId int32) error {
 	for i := 0; i < len(images); i++ {
 		fileName := fmt.Sprintf("static/img/%d_%s", userId, RandStringRunes(8)+filepath.Ext(images[i].Filename))
 		err := ctx.SaveUploadedFile(images[i], fileName)

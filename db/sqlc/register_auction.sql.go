@@ -25,8 +25,8 @@ VALUES (
 `
 
 type CreateRegisterAuctionParams struct {
-	AuctionID int32 `json:"auction_id"`
-	UserID    int32 `json:"user_id"`
+	AuctionID int64 `json:"auction_id"`
+	UserID    int64 `json:"user_id"`
 	Status    int32 `json:"status"`
 }
 
@@ -52,7 +52,7 @@ ORDER BY id ASC LIMIT $3 OFFSET $2
 `
 
 type GetListRegisterAuctionParams struct {
-	AuctionID int32 `json:"auction_id"`
+	AuctionID int64 `json:"auction_id"`
 	Offset    int32 `json:"offset"`
 	Limit     int32 `json:"limit"`
 }
@@ -109,13 +109,13 @@ WHERE ra.user_id = $1 ORDER BY id ASC LIMIT $3 OFFSET $2
 `
 
 type GetListRegisterAuctionByUserIdParams struct {
-	UserID int32 `json:"user_id"`
+	UserID int64 `json:"user_id"`
 	Offset int32 `json:"offset"`
 	Limit  int32 `json:"limit"`
 }
 
 type GetListRegisterAuctionByUserIdRow struct {
-	ID                int32        `json:"id"`
+	ID                int64        `json:"id"`
 	Title             string       `json:"title"`
 	Description       string       `json:"description"`
 	Code              string       `json:"code"`
@@ -184,7 +184,7 @@ SELECT id, auction_id, user_id, status, updated_at, created_at FROM register_auc
 WHERE id = $1 LIMIT 1
 `
 
-func (q *Queries) GetRegisterAuctionById(ctx context.Context, id int32) (RegisterAuction, error) {
+func (q *Queries) GetRegisterAuctionById(ctx context.Context, id int64) (RegisterAuction, error) {
 	row := q.db.QueryRowContext(ctx, getRegisterAuctionById, id)
 	var i RegisterAuction
 	err := row.Scan(
@@ -204,12 +204,12 @@ WHERE ra.user_id = $1 AND ra.auction_id = $2
 `
 
 type GetRegisterAuctionByUserIdParams struct {
-	UserID    int32 `json:"user_id"`
-	AuctionID int32 `json:"auction_id"`
+	UserID    int64 `json:"user_id"`
+	AuctionID int64 `json:"auction_id"`
 }
 
 type GetRegisterAuctionByUserIdRow struct {
-	ID                int32        `json:"id"`
+	ID                int64        `json:"id"`
 	Title             string       `json:"title"`
 	Description       string       `json:"description"`
 	Code              string       `json:"code"`
@@ -262,7 +262,7 @@ SELECT COUNT(*) FROM register_auction
 WHERE  auction_id = $1
 `
 
-func (q *Queries) GetTotalRegisterAuction(ctx context.Context, auctionID int32) (int64, error) {
+func (q *Queries) GetTotalRegisterAuction(ctx context.Context, auctionID int64) (int64, error) {
 	row := q.db.QueryRowContext(ctx, getTotalRegisterAuction, auctionID)
 	var count int64
 	err := row.Scan(&count)
@@ -279,7 +279,7 @@ WHERE  id = $2
 
 type UpdateStatusRegisterAuctionParams struct {
 	Status int32 `json:"status"`
-	ID     int32 `json:"id"`
+	ID     int64 `json:"id"`
 }
 
 func (q *Queries) UpdateStatusRegisterAuction(ctx context.Context, arg UpdateStatusRegisterAuctionParams) (RegisterAuction, error) {

@@ -8,21 +8,18 @@ import (
 )
 
 const createAuctionImage = `-- name: CreateAuctionImage :one
-
 INSERT INTO auction_images (
     auction_id,
-    url
-)
+    url)
 VALUES (
-           $1,
-           $2
-       )
-    RETURNING
+    $1,
+    $2)
+RETURNING
     id, auction_id, url
 `
 
 type CreateAuctionImageParams struct {
-	AuctionID int32  `json:"auction_id"`
+	AuctionID int64  `json:"auction_id"`
 	Url       string `json:"url"`
 }
 
@@ -35,11 +32,15 @@ func (q *Queries) CreateAuctionImage(ctx context.Context, arg CreateAuctionImage
 }
 
 const listAuctionImage = `-- name: ListAuctionImage :many
-SELECT auction_images.url FROM auction_images
-WHERE auction_id = $1
+SELECT
+    auction_images.url
+FROM
+    auction_images
+WHERE
+    auction_id = $1
 `
 
-func (q *Queries) ListAuctionImage(ctx context.Context, auctionID int32) ([]string, error) {
+func (q *Queries) ListAuctionImage(ctx context.Context, auctionID int64) ([]string, error) {
 	rows, err := q.db.QueryContext(ctx, listAuctionImage, auctionID)
 	if err != nil {
 		return nil, err

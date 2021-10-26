@@ -40,7 +40,7 @@ func (server *Server) setupRouter() {
 	corsConfig.AllowHeaders = append(corsConfig.AllowHeaders, "Authorization")
 	router.Use(cors.New(corsConfig))
 	router.Use(static.Serve("/static", static.LocalFile("./static", false)))
-	router.Any("/ws", server.wsHandlerFunc)
+	router.GET("/ws", server.wsHandlerFunc)
 	v1 := router.Group("/user")
 	{
 		v1.POST("/register", server.RegisterUser)

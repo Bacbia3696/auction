@@ -25,8 +25,8 @@ VALUES (
 `
 
 type CreateBidParams struct {
-	AuctionID int32 `json:"auction_id"`
-	UserID    int32 `json:"user_id"`
+	AuctionID int64 `json:"auction_id"`
+	UserID    int64 `json:"user_id"`
 	Price     int32 `json:"price"`
 	Status    int32 `json:"status"`
 }
@@ -57,7 +57,7 @@ SELECT MAX(price) FROM bid
 WHERE auction_id = $1
 `
 
-func (q *Queries) GetMaxBid(ctx context.Context, auctionID int32) (interface{}, error) {
+func (q *Queries) GetMaxBid(ctx context.Context, auctionID int64) (interface{}, error) {
 	row := q.db.QueryRowContext(ctx, getMaxBid, auctionID)
 	var max interface{}
 	err := row.Scan(&max)
@@ -70,8 +70,8 @@ WHERE auction_id = $1 AND user_id=$2
 `
 
 type GetTotalUserBidParams struct {
-	AuctionID int32 `json:"auction_id"`
-	UserID    int32 `json:"user_id"`
+	AuctionID int64 `json:"auction_id"`
+	UserID    int64 `json:"user_id"`
 }
 
 func (q *Queries) GetTotalUserBid(ctx context.Context, arg GetTotalUserBidParams) (int64, error) {

@@ -76,7 +76,7 @@ ORDER BY id ASC LIMIT $3 OFFSET $2;
 
 -- name: GetTotalUser :one
 SELECT COUNT(*) FROM users
-WHERE ( user_name LIKE  $1 OR full_name LIKE  $1 OR organization_name LIKE  $1 OR id_card LIKE  $1 OR organization_id LIKE  $1 OR email  LIKE  $1)
+WHERE ( user_name LIKE  @keyword OR full_name LIKE  @keyword OR organization_name LIKE  @keyword OR id_card LIKE  @keyword OR organization_id LIKE  @keyword OR email  LIKE  @keyword)
 ;
 -- name: UpdatePassword :one
 UPDATE users
@@ -134,7 +134,6 @@ SELECT b.id,u.user_name, u.full_name, u.phone, u.email, u.id_card, u.bank_id, b.
 FROM bid as b
          INNER JOIN users as u ON b.user_id = u.id
 WHERE b.auction_id = $1 AND b.id =$2 LIMIT 1;
-
 
 -- name: GetWinnerAuction :one
 SELECT b.id,u.user_name, u.full_name, u.phone, u.email, u.id_card, u.bank_id, b.price, b.created_at

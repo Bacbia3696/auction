@@ -1,11 +1,11 @@
 package server
 
 import (
+	"database/sql"
 	"fmt"
 	"mime/multipart"
-	"net/http"
+	"path/filepath"
 	"strconv"
-	"strings"
 	"time"
 
 	db "github.com/bacbia3696/auction/db/sqlc"
@@ -43,93 +43,93 @@ type AuctionInfo struct {
 }
 
 func (s *Server) CreateAuction(ctx *gin.Context) {
-	var req CreateAuctionRequest
+	res, err := s.createAuction(ctx)
+	SendResponse(ctx, res, err)
+}
 
+func (s *Server) createAuction(ctx *gin.Context) (interface{}, *ServerError) {
+	var req CreateAuctionRequest
 	roleId := s.GetRoleId(ctx)
 	if roleId > 2 {
-		ResponseErrMsg(ctx, nil, "User have not permission", -1)
-		return
+		return nil, ErrUserUnauthorized
 	}
 	if err := ctx.ShouldBind(&req); err != nil {
-		ResponseErr(ctx, err, 1)
-		return
+		fmt.Println(translateErr(err))
+		return nil, ErrInvalidRequest.WithDevMsg(translateErr(err))
 	}
-	//check code
-	check, err := s.store.GetByCode(ctx, req.Code)
+	// check code
+	_, err := s.store.GetByCode(ctx, req.Code)
 	if err == nil {
-		if (db.Auction{}) != check {
-			ResponseErrMsg(ctx, nil, "Auction code already exists ", 403)
-			return
-		}
+		return nil, ErrAuctionCodeExisted
+	} else if err != sql.ErrNoRows {
+		logrus.Error(err)
+		return nil, ErrGeneric
 	}
-	//check date
+	// check date
 	if req.BidStartDate.After(req.BidEndDate) || req.RegisterStartDate.After(req.RegisterEndDate) || req.RegisterStartDate.After(req.BidStartDate) || req.RegisterEndDate.After(req.BidEndDate) || req.RegisterEndDate.After(req.BidStartDate) {
-		ResponseErrMsg(ctx, nil, "Date invalid", 403)
-		return
+		return nil, ErrAuctionDateInvalid
 	}
-
 	params := db.CreateAuctionParams{}
 	copier.Copy(&params, req)
-	params.Status = 0
-	params.Organization = req.Organization
-	params.Type = req.Type
 
 	auction, err := s.store.CreateAuction(ctx, params)
 	if err != nil {
-		ResponseErr(ctx, err, 1)
-		return
+		logrus.Error(err)
+		return nil, ErrGeneric
 	}
 	auctionId := auction.ID
+
 	//handle img
 	imgForm, _ := ctx.MultipartForm()
 	images := imgForm.File["images"]
-	req.Images = images
 	for i := 0; i < len(images); i++ {
-		logrus.Infoln("images", images[i].Filename)
-		fileNames := strings.Split(images[i].Filename, ".")
-		if len(fileNames) < 2 {
-			logrus.Infoln("file invalid")
-			ResponseErrMsg(ctx, nil, "Images input invalid ", 403)
-			return
-		}
-		fileName := fmt.Sprintf("static/img/%d_%s", auctionId, RandStringRunes(8)+"."+fileNames[1])
+		fileName := fmt.Sprintf("static/img/auction_%d_%s", auctionId, RandStringRunes(8)+filepath.Ext(images[i].Filename))
 		err = ctx.SaveUploadedFile(images[i], fileName)
 		if err != nil {
-			logrus.Infoln("error save image auction", err)
-			ResponseErr(ctx, err, http.StatusInternalServerError)
-			return
+			logrus.Error(err)
+			return nil, ErrGeneric
 		}
 		_, err = s.store.CreateAuctionImage(ctx, db.CreateAuctionImageParams{
-			AuctionID: auctionId,
+			AuctionID: int64(auctionId),
 			Url:       fileName,
 		})
 		if err != nil {
-			logrus.Infoln("error save auction image", err)
-			ResponseErr(ctx, err, http.StatusInternalServerError)
-			return
+			logrus.Error(err)
+			return nil, ErrGeneric
 		}
 	}
-	ResponseOK(ctx, auction)
+	return auction, nil
 }
 
 func (s *Server) VerifyAuction(ctx *gin.Context) {
+	res, err := s.verifyAuction(ctx)
+	SendResponse(ctx, res, err)
+}
+
+func (s *Server) verifyAuction(ctx *gin.Context) (interface{}, *ServerError) {
 	roleId := s.GetRoleId(ctx)
 	if roleId > 2 {
-		ResponseErrMsg(ctx, nil, "User have not permission", -1)
-		return
+		return nil, ErrUserUnauthorized
 	}
 	uid, _ := strconv.Atoi(ctx.Query("auctionId"))
-	check, err := s.store.GetAuctionById(ctx, int32(uid))
-	if err == nil {
-		if (db.Auction{}) != check {
-			_, _ = s.store.UpdateStatusAuction(ctx, db.UpdateStatusAuctionParams{
+	_, err := s.store.GetAuctionById(ctx, int64(uid))
+	if err != nil {
+		if err == sql.ErrNoRows {
+			_, err := s.store.UpdateStatusAuction(ctx, db.UpdateStatusAuctionParams{
 				Status: 1,
-				ID:     int32(uid),
+				ID:     int64(uid),
 			})
+			if err != nil {
+				logrus.Error(err)
+				return nil, ErrGeneric
+			}
 		}
+		logrus.Error(err)
+		return nil, ErrGeneric
 	}
-	ResponseOK(ctx, nil)
+	return nil, nil
 }
+
 func (s *Server) ListAuction(ctx *gin.Context) {
 	var req Request
 	if err := ctx.ShouldBindJSON(&req); err != nil {
@@ -177,7 +177,7 @@ func (s *Server) ListAuction(ctx *gin.Context) {
 func (s *Server) RegisterAuction(ctx *gin.Context) {
 	userId := s.GetUserId(ctx)
 	auctionId, _ := strconv.Atoi(ctx.Query("auctionId"))
-	auction, err := s.store.GetAuctionById(ctx, int32(auctionId))
+	auction, err := s.store.GetAuctionById(ctx, int64(auctionId))
 	if err == nil {
 		if (db.Auction{}) != auction {
 			endRegister := auction.RegisterEndDate
@@ -188,14 +188,14 @@ func (s *Server) RegisterAuction(ctx *gin.Context) {
 			}
 			check, err := s.store.GetRegisterAuctionByUserId(ctx, db.GetRegisterAuctionByUserIdParams{
 				UserID:    userId,
-				AuctionID: int32(auctionId),
+				AuctionID: int64(auctionId),
 			})
 			if (db.GetRegisterAuctionByUserIdRow{}) != check {
 				ResponseErrMsg(ctx, nil, "User registered", -1)
 				return
 			}
 			res, err := s.store.CreateRegisterAuction(ctx, db.CreateRegisterAuctionParams{
-				AuctionID: int32(auctionId),
+				AuctionID: int64(auctionId),
 				UserID:    userId,
 				Status:    0,
 			})
@@ -223,12 +223,12 @@ func (s *Server) VerifyRegisterAuction(ctx *gin.Context) {
 		return
 	}
 	uid, _ := strconv.Atoi(ctx.Query("id"))
-	check, err := s.store.GetRegisterAuctionById(ctx, int32(uid))
+	check, err := s.store.GetRegisterAuctionById(ctx, int64(uid))
 	if err == nil {
 		if (db.RegisterAuction{}) != check {
 			_, _ = s.store.UpdateStatusRegisterAuction(ctx, db.UpdateStatusRegisterAuctionParams{
 				Status: 1,
-				ID:     int32(uid),
+				ID:     int64(uid),
 			})
 		}
 	}
@@ -254,7 +254,7 @@ func (s *Server) ListRegisterAuctionOfUser(ctx *gin.Context) {
 	offset := limit * (page - 1)
 
 	auctions, err := s.store.GetListRegisterAuctionByUserId(ctx, db.GetListRegisterAuctionByUserIdParams{
-		UserID: uid,
+		UserID: int64(uid),
 		Limit:  limit,
 		Offset: offset,
 	})
@@ -268,9 +268,9 @@ func (s *Server) ListRegisterAuctionOfUser(ctx *gin.Context) {
 
 func (s *Server) GetAuctionDetail(ctx *gin.Context) {
 	aid, _ := strconv.Atoi(ctx.Query("id"))
-	auction, err := s.store.GetAuctionById(ctx, int32(aid))
+	auction, err := s.store.GetAuctionById(ctx, int64(aid))
 	if err == nil {
-		images, _ := s.store.ListAuctionImage(ctx, int32(aid))
+		images, _ := s.store.ListAuctionImage(ctx, int64(aid))
 		auction := AuctionInfo{
 			Auction: auction,
 			Images:  images,
@@ -286,8 +286,8 @@ func (s *Server) GetAuctionStatus(ctx *gin.Context) {
 	aid, _ := strconv.Atoi(ctx.Query("id"))
 	uid := s.GetUserId(ctx)
 	auction, err := s.store.GetRegisterAuctionByUserId(ctx, db.GetRegisterAuctionByUserIdParams{
-		UserID:    uid,
-		AuctionID: int32(aid),
+		UserID:    int64(uid),
+		AuctionID: int64(aid),
 	})
 	status := -2
 
@@ -313,14 +313,14 @@ func (s *Server) GetMaxBidAuction(ctx *gin.Context) {
 	uid := s.GetUserId(ctx)
 	auction, err := s.store.GetRegisterAuctionByUserId(ctx, db.GetRegisterAuctionByUserIdParams{
 		UserID:    uid,
-		AuctionID: int32(aid),
+		AuctionID: int64(aid),
 	})
 	if err != nil || auction.Verify <= 0 {
 		logrus.Error(err)
 		ResponseErrMsg(ctx, nil, "User have not permission", -1)
 		return
 	}
-	maxPrice, err := s.store.GetMaxBid(ctx, int32(aid))
+	maxPrice, err := s.store.GetMaxBid(ctx, int64(aid))
 	if err == nil && maxPrice != nil {
 		ResponseOK(ctx, maxPrice)
 		return
@@ -333,14 +333,14 @@ func (s *Server) GetWinnerAuction(ctx *gin.Context) {
 	uid := s.GetUserId(ctx)
 	auction, err := s.store.GetRegisterAuctionByUserId(ctx, db.GetRegisterAuctionByUserIdParams{
 		UserID:    uid,
-		AuctionID: int32(aid),
+		AuctionID: int64(aid),
 	})
 	if err != nil || auction.Verify <= 0 {
 		logrus.Error(err)
 		ResponseErrMsg(ctx, nil, "User have not permission", -1)
 		return
 	}
-	winner, err := s.store.GetWinnerAuction(ctx, int32(aid))
+	winner, err := s.store.GetWinnerAuction(ctx, int64(aid))
 	if err == nil {
 		ResponseOK(ctx, winner)
 		return
@@ -348,10 +348,10 @@ func (s *Server) GetWinnerAuction(ctx *gin.Context) {
 	ResponseOK(ctx, nil)
 }
 
-func (s *Server) checkPermission(ctx *gin.Context, uid, aid int) bool {
+func (s *Server) checkPermission(ctx *gin.Context, uid, aid int64) bool {
 	auction, err := s.store.GetRegisterAuctionByUserId(ctx, db.GetRegisterAuctionByUserIdParams{
-		UserID:    int32(uid),
-		AuctionID: int32(aid),
+		UserID:    int64(uid),
+		AuctionID: int64(aid),
 	})
 	if err != nil || auction.Verify <= 0 {
 		logrus.Error(err)
@@ -382,7 +382,7 @@ func (s *Server) GetListUserRegisterAuction(ctx *gin.Context) {
 	if roleId < 3 {
 		status = req.Status
 	} else {
-		flag = s.checkPermission(ctx, int(uid), int(req.AuctionId))
+		flag = s.checkPermission(ctx, uid, req.AuctionId)
 	}
 	if flag == false {
 		ResponseErrMsg(ctx, nil, "User have not permission", -1)
@@ -461,7 +461,7 @@ func (s *Server) GetListUserBiAuction(ctx *gin.Context) {
 	flag := true
 	roleId := s.GetRoleId(ctx)
 	if roleId >= 3 {
-		flag = s.checkPermission(ctx, int(uid), int(req.AuctionId))
+		flag = s.checkPermission(ctx, int64(uid), req.AuctionId)
 	}
 	if flag == false {
 		ResponseErrMsg(ctx, nil, "User have not permission", -1)

@@ -8,7 +8,7 @@ import (
 )
 
 type Auction struct {
-	ID                int32        `json:"id"`
+	ID                int64        `json:"id"`
 	Title             string       `json:"title"`
 	Description       string       `json:"description"`
 	Code              string       `json:"code"`
@@ -29,15 +29,15 @@ type Auction struct {
 }
 
 type AuctionImage struct {
-	ID        int32  `json:"id"`
-	AuctionID int32  `json:"auction_id"`
+	ID        int64  `json:"id"`
+	AuctionID int64  `json:"auction_id"`
 	Url       string `json:"url"`
 }
 
 type Bid struct {
-	ID        int32     `json:"id"`
-	AuctionID int32     `json:"auction_id"`
-	UserID    int32     `json:"user_id"`
+	ID        int64     `json:"id"`
+	AuctionID int64     `json:"auction_id"`
+	UserID    int64     `json:"user_id"`
 	Price     int32     `json:"price"`
 	Status    int32     `json:"status"`
 	UpdatedAt time.Time `json:"updated_at"`
@@ -45,29 +45,29 @@ type Bid struct {
 }
 
 type RegisterAuction struct {
-	ID        int32        `json:"id"`
-	AuctionID int32        `json:"auction_id"`
-	UserID    int32        `json:"user_id"`
+	ID        int64        `json:"id"`
+	AuctionID int64        `json:"auction_id"`
+	UserID    int64        `json:"user_id"`
 	Status    int32        `json:"status"`
 	UpdatedAt sql.NullTime `json:"updated_at"`
 	CreatedAt time.Time    `json:"created_at"`
 }
 
 type RegisterAuctionImage struct {
-	ID                int32  `json:"id"`
-	RegisterAuctionID int32  `json:"register_auction_id"`
+	ID                int64  `json:"id"`
+	RegisterAuctionID int64  `json:"register_auction_id"`
 	Url               string `json:"url"`
 }
 
 type Role struct {
-	ID   int32  `json:"id"`
+	ID   int64  `json:"id"`
 	Name string `json:"name"`
 }
 
 type User struct {
-	ID                  int32          `json:"id"`
+	ID                  int64          `json:"id"`
 	UserName            string         `json:"user_name"`
-	Password            string         `json:"-"`
+	Password            string         `json:"password"`
 	FullName            string         `json:"full_name"`
 	Email               string         `json:"email"`
 	Address             string         `json:"address"`
@@ -90,14 +90,14 @@ type User struct {
 }
 
 type UserImage struct {
-	ID     int32  `json:"id"`
-	UserID int32  `json:"user_id"`
+	ID     int64  `json:"id"`
+	UserID int64  `json:"user_id"`
 	Url    string `json:"url"`
 	Type   int32  `json:"type"`
 }
 
 type UserRole struct {
-	ID     int32 `json:"id"`
-	UserID int32 `json:"user_id"`
-	RoleID int32 `json:"role_id"`
+	ID     int64 `json:"id"`
+	UserID int64 `json:"user_id"`
+	RoleID int64 `json:"role_id"`
 }
