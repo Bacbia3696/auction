@@ -19,7 +19,7 @@ type CreateAuctionRequest struct {
 	Title             string                  `form:"title" binding:"required"`
 	Description       string                  `form:"description" binding:"required"`
 	Code              string                  `form:"code" binding:"required"`
-	Owner             string                  `form:"owner" binding:"required,min=6"`
+	Owner             string                  `form:"owner" binding:"required"`
 	Organization      string                  `form:"organization" binding:"required"`
 	Info              string                  `form:"info" binding:"required"`
 	Address           string                  `form:"address" binding:"required"`
@@ -54,7 +54,6 @@ func (s *Server) createAuction(ctx *gin.Context) (interface{}, *ServerError) {
 		return nil, ErrUserUnauthorized
 	}
 	if err := ctx.ShouldBind(&req); err != nil {
-		fmt.Println(translateErr(err))
 		return nil, ErrInvalidRequest.WithDevMsg(translateErr(err))
 	}
 	// check code
@@ -66,8 +65,11 @@ func (s *Server) createAuction(ctx *gin.Context) (interface{}, *ServerError) {
 		return nil, ErrGeneric
 	}
 	// check date
-	if req.BidStartDate.After(req.BidEndDate) || req.RegisterStartDate.After(req.RegisterEndDate) || req.RegisterStartDate.After(req.BidStartDate) || req.RegisterEndDate.After(req.BidEndDate) || req.RegisterEndDate.After(req.BidStartDate) {
-		return nil, ErrAuctionDateInvalid
+	if req.BidStartDate.After(req.BidEndDate) || req.RegisterStartDate.After(req.RegisterEndDate) {
+		return nil, ErrAuctionDateInvalid1
+	}
+	if req.RegisterEndDate.After(req.BidStartDate) {
+		return nil, ErrAuctionDateInvalid2
 	}
 	params := db.CreateAuctionParams{}
 	copier.Copy(&params, req)

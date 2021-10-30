@@ -103,12 +103,12 @@ CREATE TABLE register_auction_images (
 );
 
 CREATE TABLE bid (
-      id bigserial PRIMARY KEY,
-      auction_id bigint NOT NULL,
-      user_id bigint NOT NULL,
-      price int NOT NULL,
-      status int NOT NULL,
-      updated_at timestamptz NOT NULL DEFAULT (now()),
-      created_at timestamptz NOT NULL DEFAULT (now())
+    id bigserial PRIMARY KEY,
+    auction_id bigint NOT NULL,
+    user_id bigint NOT NULL,
+    price int NOT NULL,
+    status int NOT NULL,
+    updated_at timestamptz NOT NULL DEFAULT (now()),
+    created_at timestamptz NOT NULL DEFAULT (now())
 );
 
