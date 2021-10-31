@@ -5,6 +5,7 @@ import (
 	"strconv"
 
 	db "github.com/bacbia3696/auction/db/sqlc"
+	"github.com/bacbia3696/auction/internal/constant"
 	"github.com/bacbia3696/auction/internal/token"
 	"github.com/gin-gonic/gin"
 	"github.com/sirupsen/logrus"
@@ -29,7 +30,7 @@ func (s *Server) GetUserId(ctx *gin.Context) int64 {
 
 type Request struct {
 	Keyword   string `json:"keyword"`
-	Status    int    `json:"status"`
+	Status    *int    `json:"status"`
 	Page      int32  `json:"page"`
 	AuctionId int64  `json:"auctionId"`
 	Size      int32  `json:"size"`
@@ -89,7 +90,7 @@ func (s *Server) VerifyUser(ctx *gin.Context) {
 	if err == nil {
 		if (db.User{}) != checkUser {
 			_, _ = s.store.UpdateStatus(ctx, db.UpdateStatusParams{
-				Status: 1,
+				Status: constant.USER_STATUS_VERIFIED,
 				ID:     int64(uid),
 			})
 		}
@@ -108,7 +109,7 @@ func (s *Server) LockUser(ctx *gin.Context) {
 	if err == nil {
 		if (db.User{}) != checkUser {
 			_, _ = s.store.UpdateStatus(ctx, db.UpdateStatusParams{
-				Status: -1,
+				Status: constant.USER_STATUS_LOCKED,
 				ID:     int64(uid),
 			})
 		}

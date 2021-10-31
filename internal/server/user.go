@@ -81,18 +81,16 @@ func (s *Server) registerUser(ctx *gin.Context) (interface{}, *ServerError) {
 	// organization
 	if req.RoleId == 4 {
 		if govalidator.IsNull(req.OrganizationName) || govalidator.IsNull(req.OrganizationId) || govalidator.IsNull(req.OrganizationAddress) {
-			return nil, ErrInvalidRequest.WithDevMsg("Input invalid")
+			return nil, ErrInvalidRequest.WithDevMsg("Empty organization field")
 		}
 	}
 
 	//checkUsername
 	_, err := s.store.GetByUserName(ctx, req.UserName)
-	if err != nil {
-		if err != sql.ErrNoRows {
-			return nil, ErrGeneric
-		}
-	} else {
+	if err == nil {
 		return nil, ErrUserNameExisted
+	} else if err != sql.ErrNoRows {
+		return nil, ErrGeneric
 	}
 	//TODO: checkIdCard
 	//checkEmail

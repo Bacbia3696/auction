@@ -9,6 +9,7 @@ import (
 	"time"
 
 	db "github.com/bacbia3696/auction/db/sqlc"
+	"github.com/bacbia3696/auction/internal/constant"
 	"github.com/bacbia3696/auction/internal/paycode"
 	"github.com/gin-gonic/gin"
 	"github.com/jinzhu/copier"
@@ -118,7 +119,7 @@ func (s *Server) verifyAuction(ctx *gin.Context) (interface{}, *ServerError) {
 	if err != nil {
 		if err == sql.ErrNoRows {
 			_, err := s.store.UpdateStatusAuction(ctx, db.UpdateStatusAuctionParams{
-				Status: 1,
+				Status: constant.AUCTION_STATUS_VERIFIED,
 				ID:     int64(uid),
 			})
 			if err != nil {
@@ -199,7 +200,7 @@ func (s *Server) RegisterAuction(ctx *gin.Context) {
 			res, err := s.store.CreateRegisterAuction(ctx, db.CreateRegisterAuctionParams{
 				AuctionID: int64(auctionId),
 				UserID:    userId,
-				Status:    0,
+				Status:    constant.AUCTION_STATUS_INIT,
 			})
 			if err == nil {
 				ResponseOK(ctx, res)
@@ -229,7 +230,7 @@ func (s *Server) VerifyRegisterAuction(ctx *gin.Context) {
 	if err == nil {
 		if (db.RegisterAuction{}) != check {
 			_, _ = s.store.UpdateStatusRegisterAuction(ctx, db.UpdateStatusRegisterAuctionParams{
-				Status: 1,
+				Status: constant.REGISTER_AUCTION_STATUS_VERIFIED,
 				ID:     int64(uid),
 			})
 		}
@@ -355,11 +356,11 @@ func (s *Server) checkPermission(ctx *gin.Context, uid, aid int64) bool {
 		UserID:    int64(uid),
 		AuctionID: int64(aid),
 	})
-	if err != nil || auction.Verify <= 0 {
+	if err != nil {
 		logrus.Error(err)
 		return false
 	}
-	return true
+	return auction.Verify > 0
 }
 
 type RespUsersRegisterAuction struct {
@@ -378,10 +379,11 @@ func (s *Server) GetListUserRegisterAuction(ctx *gin.Context) {
 		return
 	}
 	uid := s.GetUserId(ctx)
-	status := 1
+	status := new(int)
+	*status = constant.REGISTER_AUCTION_STATUS_VERIFIED
 	flag := true
 	roleId := s.GetRoleId(ctx)
-	if roleId < 3 {
+	if roleId == constant.ROLE_ID_ADMIN || roleId == constant.ROLE_ID_OPERATOR {
 		status = req.Status
 	} else {
 		flag = s.checkPermission(ctx, uid, req.AuctionId)
@@ -400,7 +402,7 @@ func (s *Server) GetListUserRegisterAuction(ctx *gin.Context) {
 	}
 	limit := size
 	offset := limit * (page - 1)
-	if status == 2 {
+	if status == nil {
 		users, err := s.store.GetAllListUserRegisterAuction(ctx, db.GetAllListUserRegisterAuctionParams{
 			AuctionID: req.AuctionId,
 			Offset:    offset,
@@ -422,11 +424,11 @@ func (s *Server) GetListUserRegisterAuction(ctx *gin.Context) {
 			AuctionID: req.AuctionId,
 			Offset:    offset,
 			Limit:     limit,
-			Status:    int32(status),
+			Status:    int32(*status),
 		})
 		count, err := s.store.GetTotalUserRegisterAuctionByStatus(ctx, db.GetTotalUserRegisterAuctionByStatusParams{
 			AuctionID: req.AuctionId,
-			Status:    int32(status),
+			Status:    int32(*status),
 		})
 
 		if err == nil {
