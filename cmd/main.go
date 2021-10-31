@@ -3,6 +3,7 @@ package main
 import (
 	"database/sql"
 	"log"
+	"os"
 
 	db "github.com/bacbia3696/auction/db/sqlc"
 	"github.com/bacbia3696/auction/internal/config"
@@ -22,10 +23,17 @@ func main() {
 }
 
 func configLogger(cfg *config.Config) {
+	logrus.SetLevel(logrus.DebugLevel)
 	if cfg.Environment == constant.PRODUCTION {
 		logrus.SetLevel(logrus.InfoLevel)
 	}
-	logrus.SetLevel(logrus.DebugLevel)
+	if cfg.LogFile != "" {
+		f, err := os.OpenFile(cfg.LogFile, os.O_WRONLY|os.O_CREATE, 0755)
+		if err != nil {
+			panic(err)
+		}
+		logrus.SetOutput(f)
+	}
 }
 
 func loadConfig() *config.Config {

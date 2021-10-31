@@ -1,5 +1,6 @@
 vendor/
 .idea
 .DS_Store
+log.txt
 
 static/

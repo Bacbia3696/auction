@@ -4,9 +4,10 @@ import "github.com/spf13/viper"
 
 type Config struct {
 	DbSource     string `mapstructure:"db_source"`
-	Server       Server `mapstructure:"server"`
+	Server       `mapstructure:"server"`
 	Environment  string `mapstructure:"environment"`
 	TokenSignKey string `mapstructure:"token_sign_key"`
+	LogFile      string `mapstructure:"log_file"`
 }
 
 type Server struct {

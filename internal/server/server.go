@@ -8,6 +8,7 @@ import (
 	"github.com/gin-contrib/cors"
 	"github.com/gin-contrib/static"
 	"github.com/gin-gonic/gin"
+	"github.com/sirupsen/logrus"
 )
 
 type Server struct {
@@ -27,6 +28,10 @@ func (s *Server) Serve() error {
 	if s.cfg.Environment == constant.PRODUCTION {
 		gin.SetMode(gin.ReleaseMode)
 	}
+	if s.cfg.LogFile != "" {
+		gin.DisableConsoleColor()
+	}
+	gin.DefaultWriter = logrus.StandardLogger().Out
 	// TODO: bind custom validator
 	s.setupRouter()
 	transInit()
