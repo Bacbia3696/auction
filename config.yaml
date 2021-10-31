@@ -1,8 +1,8 @@
 server:
   host: 0.0.0.0
   port: 9000
-db_source: postgresql://postgres:123qwe@localhost:5432/auction?sslmode=disable
+db_source: postgresql://postgres:123qwe@s1:5432/auction?sslmode=disable
 environment: development
 token_sign_key: i7q6KmgI50
 # log to stdout if empty
-log_file: ''
+log_file: 'log.txt'
