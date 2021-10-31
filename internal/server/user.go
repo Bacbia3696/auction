@@ -75,7 +75,7 @@ func (s *Server) registerUser(ctx *gin.Context) (interface{}, *ServerError) {
 		return nil, ErrInvalidRequest.WithDevMsg(translateErr(err))
 	}
 	//check roleId
-	if req.RoleId < 2 || req.RoleId > 4 {
+	if req.RoleId < 3 || req.RoleId > 4 {
 		return nil, ErrInvalidRequest.WithDevMsg("RoleId invalid")
 	}
 	// organization
