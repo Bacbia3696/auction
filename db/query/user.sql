@@ -74,9 +74,19 @@ SELECT * FROM users
 WHERE ( user_name LIKE  $1 OR full_name LIKE  $1 OR organization_name LIKE  $1 OR id_card LIKE  $1 OR organization_id LIKE  $1 OR email  LIKE  $1)
 ORDER BY id ASC LIMIT $3 OFFSET $2;
 
+-- name: GetListUserStatusInit :many
+SELECT * FROM users
+WHERE ( status = 0 AND (user_name LIKE  $1 OR full_name LIKE  $1 OR organization_name LIKE  $1 OR id_card LIKE  $1 OR organization_id LIKE  $1 OR email  LIKE  $1))
+ORDER BY id ASC LIMIT $3 OFFSET $2;
+
 -- name: GetTotalUser :one
 SELECT COUNT(*) FROM users
 WHERE ( user_name LIKE  @keyword OR full_name LIKE  @keyword OR organization_name LIKE  @keyword OR id_card LIKE  @keyword OR organization_id LIKE  @keyword OR email  LIKE  @keyword)
+;
+
+-- name: GetTotalUserStatusInit :one
+SELECT COUNT(*) FROM users
+WHERE ( status = 0 AND (user_name LIKE  @keyword OR full_name LIKE  @keyword OR organization_name LIKE  @keyword OR id_card LIKE  @keyword OR organization_id LIKE  @keyword OR email  LIKE  @keyword))
 ;
 -- name: UpdatePassword :one
 UPDATE users
@@ -87,7 +97,7 @@ WHERE  id = $2
 
 
 -- name: GetAllListUserRegisterAuction :many
-SELECT u.user_name, u.full_name, u.phone, u.email, u.id_card, u.bank_id, ra.created_at, ra.status as verify
+SELECT u.user_name, u.full_name, u.phone, u.email, u.id_card, u.bank_id, ra.created_at, ra.status as verify, u.id as user_id, u.address as user_address, ra.id as id
 FROM register_auction as ra
 INNER JOIN auctions as au ON ra.auction_id = au.id
 INNER JOIN users as u ON ra.user_id = u.id

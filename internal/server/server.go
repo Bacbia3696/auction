@@ -65,8 +65,8 @@ func (server *Server) setupRouter() {
 		authRoutes.GET("/cms/user/detail", server.ViewDetailUser)
 
 		authRoutes.POST("/cms/auction/create", server.CreateAuction)
-		authRoutes.GET("/cms/auction/verify", server.VerifyAuction)
-		authRoutes.GET("/cms/register-auction/verify", server.VerifyRegisterAuction)
+		authRoutes.POST("/cms/auction/verify", server.VerifyAuction)
+		authRoutes.POST("/cms/register-auction/verify", server.VerifyRegisterAuction)
 
 		authRoutes.POST("/user/change-password", server.ChangePassword)
 		authRoutes.POST("/user/register-auction", server.RegisterAuction)

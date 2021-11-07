@@ -119,7 +119,7 @@ func (s *Server) verifyAuction(ctx *gin.Context) (interface{}, *ServerError) {
 	if err != nil {
 		if err == sql.ErrNoRows {
 			_, err := s.store.UpdateStatusAuction(ctx, db.UpdateStatusAuctionParams{
-				Status: constant.AUCTION_STATUS_VERIFIED,
+				Status: 1 - constant.AUCTION_STATUS_VERIFIED,
 				ID:     int64(uid),
 			})
 			if err != nil {
@@ -225,15 +225,32 @@ func (s *Server) VerifyRegisterAuction(ctx *gin.Context) {
 		ResponseErrMsg(ctx, nil, "User have not permission", -1)
 		return
 	}
-	uid, _ := strconv.Atoi(ctx.Query("id"))
-	check, err := s.store.GetRegisterAuctionById(ctx, int64(uid))
-	if err == nil {
-		if (db.RegisterAuction{}) != check {
-			_, _ = s.store.UpdateStatusRegisterAuction(ctx, db.UpdateStatusRegisterAuctionParams{
-				Status: constant.REGISTER_AUCTION_STATUS_VERIFIED,
-				ID:     int64(uid),
-			})
-		}
+
+	req := &struct {
+		Id int64
+	}{}
+	err := ctx.ShouldBindJSON(req)
+	if err != nil {
+	logrus.Error(err)
+		ResponseErrMsg(ctx, nil, "Có lỗi xảy ra, vui lòng thử lại sau!", -1)
+		return
+	}
+	reg, err := s.store.GetRegisterAuctionById(ctx, req.Id)
+	if err != nil {
+	logrus.Error(err)
+		ResponseErrMsg(ctx, nil, "Có lỗi xảy ra, vui lòng thử lại sau!", -1)
+		return
+	}
+	logrus.Info(req)
+	_, err = s.store.UpdateStatusRegisterAuction(ctx, db.UpdateStatusRegisterAuctionParams{
+		// toggle status 0, 1
+		Status: 1 - reg.Status,
+		ID:     req.Id,
+	})
+	if err != nil {
+		logrus.Error(err)
+		ResponseErrMsg(ctx, nil, "Có lỗi xảy ra, vui lòng thử lại sau!", -1)
+		return
 	}
 	ResponseOK(ctx, nil)
 }

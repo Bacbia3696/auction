@@ -185,7 +185,7 @@ func (q *Queries) GetAllListUserBidAuction(ctx context.Context, arg GetAllListUs
 }
 
 const getAllListUserRegisterAuction = `-- name: GetAllListUserRegisterAuction :many
-SELECT u.user_name, u.full_name, u.phone, u.email, u.id_card, u.bank_id, ra.created_at, ra.status as verify
+SELECT u.user_name, u.full_name, u.phone, u.email, u.id_card, u.bank_id, ra.created_at, ra.status as verify, u.id as user_id, u.address as user_address, ra.id as id
 FROM register_auction as ra
 INNER JOIN auctions as au ON ra.auction_id = au.id
 INNER JOIN users as u ON ra.user_id = u.id
@@ -200,14 +200,17 @@ type GetAllListUserRegisterAuctionParams struct {
 }
 
 type GetAllListUserRegisterAuctionRow struct {
-	UserName  string    `json:"user_name"`
-	FullName  string    `json:"full_name"`
-	Phone     string    `json:"phone"`
-	Email     string    `json:"email"`
-	IDCard    string    `json:"id_card"`
-	BankID    string    `json:"bank_id"`
-	CreatedAt time.Time `json:"created_at"`
-	Verify    int32     `json:"verify"`
+	UserName    string    `json:"user_name"`
+	FullName    string    `json:"full_name"`
+	Phone       string    `json:"phone"`
+	Email       string    `json:"email"`
+	IDCard      string    `json:"id_card"`
+	BankID      string    `json:"bank_id"`
+	CreatedAt   time.Time `json:"created_at"`
+	Verify      int32     `json:"verify"`
+	UserID      int64     `json:"user_id"`
+	UserAddress string    `json:"user_address"`
+	ID          int64     `json:"id"`
 }
 
 func (q *Queries) GetAllListUserRegisterAuction(ctx context.Context, arg GetAllListUserRegisterAuctionParams) ([]GetAllListUserRegisterAuctionRow, error) {
@@ -228,6 +231,9 @@ func (q *Queries) GetAllListUserRegisterAuction(ctx context.Context, arg GetAllL
 			&i.BankID,
 			&i.CreatedAt,
 			&i.Verify,
+			&i.UserID,
+			&i.UserAddress,
+			&i.ID,
 		); err != nil {
 			return nil, err
 		}
@@ -539,6 +545,64 @@ func (q *Queries) GetListUserRegisterAuctionByStatus(ctx context.Context, arg Ge
 	return items, nil
 }
 
+const getListUserStatusInit = `-- name: GetListUserStatusInit :many
+SELECT id, user_name, password, full_name, email, address, phone, birthdate, id_card, id_card_address, id_card_date, bank_id, bank_owner, bank_name, status, organization_name, organization_id, organization_date, organization_address, position, created_at, updated_at FROM users
+WHERE ( status = 0 AND (user_name LIKE  $1 OR full_name LIKE  $1 OR organization_name LIKE  $1 OR id_card LIKE  $1 OR organization_id LIKE  $1 OR email  LIKE  $1))
+ORDER BY id ASC LIMIT $3 OFFSET $2
+`
+
+type GetListUserStatusInitParams struct {
+	UserName string `json:"user_name"`
+	Offset   int32  `json:"offset"`
+	Limit    int32  `json:"limit"`
+}
+
+func (q *Queries) GetListUserStatusInit(ctx context.Context, arg GetListUserStatusInitParams) ([]User, error) {
+	rows, err := q.db.QueryContext(ctx, getListUserStatusInit, arg.UserName, arg.Offset, arg.Limit)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []User{}
+	for rows.Next() {
+		var i User
+		if err := rows.Scan(
+			&i.ID,
+			&i.UserName,
+			&i.Password,
+			&i.FullName,
+			&i.Email,
+			&i.Address,
+			&i.Phone,
+			&i.Birthdate,
+			&i.IDCard,
+			&i.IDCardAddress,
+			&i.IDCardDate,
+			&i.BankID,
+			&i.BankOwner,
+			&i.BankName,
+			&i.Status,
+			&i.OrganizationName,
+			&i.OrganizationID,
+			&i.OrganizationDate,
+			&i.OrganizationAddress,
+			&i.Position,
+			&i.CreatedAt,
+			&i.UpdatedAt,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const getLiveUserBidAuction = `-- name: GetLiveUserBidAuction :one
 SELECT b.id,u.user_name, u.full_name, u.phone, u.email, u.id_card, u.bank_id, b.price, b.created_at
 FROM bid as b
@@ -636,6 +700,18 @@ type GetTotalUserRegisterAuctionByStatusParams struct {
 
 func (q *Queries) GetTotalUserRegisterAuctionByStatus(ctx context.Context, arg GetTotalUserRegisterAuctionByStatusParams) (int64, error) {
 	row := q.db.QueryRowContext(ctx, getTotalUserRegisterAuctionByStatus, arg.AuctionID, arg.Status)
+	var count int64
+	err := row.Scan(&count)
+	return count, err
+}
+
+const getTotalUserStatusInit = `-- name: GetTotalUserStatusInit :one
+SELECT COUNT(*) FROM users
+WHERE ( status = 0 AND (user_name LIKE  $1 OR full_name LIKE  $1 OR organization_name LIKE  $1 OR id_card LIKE  $1 OR organization_id LIKE  $1 OR email  LIKE  $1))
+`
+
+func (q *Queries) GetTotalUserStatusInit(ctx context.Context, keyword string) (int64, error) {
+	row := q.db.QueryRowContext(ctx, getTotalUserStatusInit, keyword)
 	var count int64
 	err := row.Scan(&count)
 	return count, err

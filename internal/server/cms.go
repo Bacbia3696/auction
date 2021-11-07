@@ -30,7 +30,7 @@ func (s *Server) GetUserId(ctx *gin.Context) int64 {
 
 type Request struct {
 	Keyword   string `json:"keyword"`
-	Status    *int    `json:"status"`
+	Status    *int   `json:"status"`
 	Page      int32  `json:"page"`
 	AuctionId int64  `json:"auctionId"`
 	Size      int32  `json:"size"`
@@ -64,8 +64,19 @@ func (s *Server) ListUser(ctx *gin.Context) {
 		ResponseErrMsg(ctx, nil, "User have not permission", -1)
 		return
 	}
-	users, err := s.store.GetListUser(ctx, db.GetListUserParams{UserName: "%" + keyword + "%", Limit: limit, Offset: offset})
-	count, err := s.store.GetTotalUser(ctx, "%"+keyword+"%")
+
+	var users []db.User
+	var count int64
+	var err error
+	if req.Status == nil {
+		logrus.Println("there")
+		users, err = s.store.GetListUser(ctx, db.GetListUserParams{UserName: "%" + keyword + "%", Limit: limit, Offset: offset})
+		count, err = s.store.GetTotalUser(ctx, "%"+keyword+"%")
+	} else {
+		logrus.Println("here")
+		users, err = s.store.GetListUserStatusInit(ctx, db.GetListUserStatusInitParams{UserName: "%" + keyword + "%", Limit: limit, Offset: offset})
+		count, err = s.store.GetTotalUserStatusInit(ctx, "%"+keyword+"%")
+	}
 
 	data := RespUsers{
 		Total: count,

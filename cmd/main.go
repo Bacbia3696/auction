@@ -24,6 +24,7 @@ func main() {
 
 func configLogger(cfg *config.Config) {
 	logrus.SetLevel(logrus.DebugLevel)
+	logrus.SetReportCaller(true)
 	if cfg.Environment == constant.PRODUCTION {
 		logrus.SetLevel(logrus.InfoLevel)
 	}
