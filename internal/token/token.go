@@ -9,13 +9,14 @@ import (
 
 type Claims struct {
 	Name string `json:"Name"`
-	Id   int64    `json:"Id"`
+	Id   int64  `json:"Id"`
 	jwt.StandardClaims
 }
+
 var jwtKey = []byte("abcdefghijklmnopq") //config.Get().TokenSignKey
 
 func GenToken(user db.User) (string, error) {
-	expirationTime := time.Now().Add(120000 * time.Second)
+	expirationTime := time.Now().Add(720 * time.Hour)
 	claims := &Claims{
 		Name: user.UserName,
 		Id:   user.ID,
@@ -27,8 +28,6 @@ func GenToken(user db.User) (string, error) {
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
 	return token.SignedString(jwtKey)
 }
-
-
 
 func Verify(tokenString string) (*Claims, error) {
 	tk := &Claims{}
